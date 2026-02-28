@@ -37,11 +37,13 @@ exports.XdebugProfileReadonlyEditorProvider = exports.XDEBUG_PROFILE_VIEW_TYPE =
 const path = __importStar(require("node:path"));
 const vscode = __importStar(require("vscode"));
 const parser_1 = require("../cachegrind/parser");
+const sourceResolver_1 = require("../source/sourceResolver");
 const i18n_1 = require("./i18n");
 const templateHelpers_1 = require("./templateHelpers");
 exports.XDEBUG_PROFILE_VIEW_TYPE = 'xdebugProfileViewer.viewer';
 class XdebugProfileReadonlyEditorProvider {
     context;
+    sourceResolver = new sourceResolver_1.SourceResolver();
     static register(context) {
         const provider = new XdebugProfileReadonlyEditorProvider(context);
         return vscode.window.registerCustomEditorProvider(exports.XDEBUG_PROFILE_VIEW_TYPE, provider, {
@@ -108,7 +110,7 @@ class XdebugProfileReadonlyEditorProvider {
         }
     }
     async openSourceLocation(filePath, line, from) {
-        const targetUri = await this.resolveSourceUri(filePath, from);
+        const targetUri = await this.sourceResolver.resolveSourceUri(filePath, from);
         if (!targetUri) {
             const ui = (0, i18n_1.getUiStrings)(vscode.env.language);
             void vscode.window.showWarningMessage(`${ui.source}: ${filePath} (${ui.unknown}). Configure xdebugProfileViewer.pathMappings.`);
@@ -121,85 +123,6 @@ class XdebugProfileReadonlyEditorProvider {
             editor.selection = new vscode.Selection(position, position);
             editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
         }
-    }
-    async resolveSourceUri(filePath, from) {
-        const candidates = new Set();
-        const mappings = this.getPathMappings();
-        for (const mapped of this.applyPathMappings(filePath, mappings)) {
-            candidates.add(mapped);
-        }
-        if (path.isAbsolute(filePath)) {
-            candidates.add(path.normalize(filePath));
-        }
-        else {
-            candidates.add(path.resolve(path.dirname(from.fsPath), filePath));
-            for (const folder of vscode.workspace.workspaceFolders ?? []) {
-                candidates.add(path.resolve(folder.uri.fsPath, filePath));
-            }
-        }
-        const direct = await this.findFirstExistingFile(candidates);
-        if (direct) {
-            return direct;
-        }
-        return this.findBySuffix(filePath);
-    }
-    getPathMappings() {
-        const cfg = vscode.workspace.getConfiguration('xdebugProfileViewer');
-        const mappings = cfg.get('pathMappings', {});
-        return mappings ?? {};
-    }
-    applyPathMappings(filePath, mappings) {
-        const out = [];
-        const sourceNorm = normalizeSlashes(filePath);
-        const entries = Object.entries(mappings).sort((a, b) => b[0].length - a[0].length);
-        for (const [fromPrefixRaw, toPrefixRaw] of entries) {
-            const fromPrefix = trimTrailingSlash(normalizeSlashes(fromPrefixRaw));
-            const toPrefix = trimTrailingSlash(toPrefixRaw);
-            if (!fromPrefix || !toPrefix) {
-                continue;
-            }
-            if (!sourceNorm.startsWith(fromPrefix)) {
-                continue;
-            }
-            const rest = sourceNorm.slice(fromPrefix.length).replace(/^\/+/, '');
-            out.push(path.normalize(path.join(toPrefix, rest)));
-        }
-        return out;
-    }
-    async findFirstExistingFile(candidates) {
-        for (const candidate of candidates) {
-            const uri = vscode.Uri.file(candidate);
-            try {
-                await vscode.workspace.fs.stat(uri);
-                return uri;
-            }
-            catch {
-                // keep searching
-            }
-        }
-        return undefined;
-    }
-    async findBySuffix(filePath) {
-        const folders = vscode.workspace.workspaceFolders ?? [];
-        if (folders.length === 0) {
-            return undefined;
-        }
-        const parts = normalizeSlashes(filePath).split('/').filter(Boolean);
-        if (parts.length === 0) {
-            return undefined;
-        }
-        const maxParts = Math.min(parts.length, 6);
-        for (let partCount = maxParts; partCount >= 1; partCount -= 1) {
-            const suffix = parts.slice(parts.length - partCount).join('/');
-            for (const folder of folders) {
-                const pattern = new vscode.RelativePattern(folder, `**/${suffix}`);
-                const matches = await vscode.workspace.findFiles(pattern, '**/node_modules/**', 2);
-                if (matches.length > 0) {
-                    return matches[0];
-                }
-            }
-        }
-        return undefined;
     }
     getHtml(webview, profile, uri) {
         const nonce = createNonce();
@@ -1822,11 +1745,5 @@ function normalizeFunction(fn) {
         callees: (fn.callees ?? []).map((edge) => ({ ...edge, eventCosts: edge.eventCosts ?? {} })),
         eventCosts: fn.eventCosts ?? {}
     };
-}
-function normalizeSlashes(value) {
-    return value.replace(/\\/g, '/');
-}
-function trimTrailingSlash(value) {
-    return value.replace(/[\\/]+$/, '');
 }
 //# sourceMappingURL=customEditor.js.map

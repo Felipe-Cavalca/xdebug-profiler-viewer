@@ -13,6 +13,7 @@ Xdebug Profile Viewer is a VS Code extension that opens Cachegrind/Xdebug profil
 - Function-level self metrics (CPU/memory), averages per call, and criticality.
 - Caller/callee lists for the selected function.
 - `Open source` action (file + line) when source location is available.
+- CodeLens in PHP editors with `Risco de quebra: X%` per function, based on the latest profiler where that function appears.
 - UI localization:
   - Portuguese when VS Code language starts with `pt`
   - English otherwise
@@ -39,6 +40,22 @@ This extension contributes:
   - Type: `object`
   - Default: `{}`
   - Description: map source path prefixes from profiler output to local workspace paths.
+- `xdebugProfileViewer.codeLens.enabled`
+  - Type: `boolean`
+  - Default: `true`
+  - Description: enable/disable function risk CodeLens in PHP editors.
+- `xdebugProfileViewer.codeLens.profilerIndexDebounceMs`
+  - Type: `number`
+  - Default: `350`
+  - Description: debounce (ms) for indexing profiler file create/change events.
+- `xdebugProfileViewer.codeLens.profilerIndexRetryMs`
+  - Type: `number`
+  - Default: `900`
+  - Description: retry delay (ms) when a new profiler file is still incomplete while being written.
+- `xdebugProfileViewer.codeLens.profilerIndexMaxRetries`
+  - Type: `number`
+  - Default: `3`
+  - Description: max retry attempts for indexing a profiler file.
 
 Example:
 

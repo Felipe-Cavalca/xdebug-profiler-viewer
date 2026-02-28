@@ -1,0 +1,48 @@
+change-template: '* $TITLE por @$AUTHOR in (#$NUMBER)'
+no-changes-template: '* Sem alterações '
+include-pre-releases: false
+sort-direction: ascending
+categories:
+
+  - title: 'Depreciado'
+    collapse-after: 5
+    labels:
+      - 'deprecated'
+
+  - title: 'Melhorias'
+    collapse-after: 3
+    labels:
+      - 'enhancement'
+
+  - title: 'Documentação'
+    collapse-after: 3
+    labels:
+      - 'documentation'
+
+  - title: 'Correções de bugs'
+    collapse-after: 3
+    labels:
+      - 'bug'
+
+  - title: 'Atualizando dependencias'
+    collapse-after: 3
+    labels:
+      - 'dependencies'
+
+  - title: 'Refatoração de código'
+    collapse-after: 3
+    labels:
+      - 'refactoring'
+      - 'refactor'
+
+  - title: 'Testes'
+    collapse-after: 4
+    labels:
+      - 'tests'
+
+template: |
+  ## O que mudou des da $PREVIOUS_TAG
+  $CHANGES
+
+  ## Apoiadores do projeto
+  @Felipe-Cavalca

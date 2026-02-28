@@ -1,0 +1,28 @@
+name: Update Release
+
+on:
+  release:
+    types: [published, edited]
+
+jobs:
+  update_latest_release_branch:
+    if: github.event.release.prerelease == false && github.event.release.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get release info
+        shell: bash
+        run: |
+          echo "RELEASE_ID=$(jq -r .release.id "$GITHUB_EVENT_PATH")" >> $GITHUB_ENV
+          echo "RELEASE_TAG=$(jq -r .release.tag_name "$GITHUB_EVENT_PATH")" >> $GITHUB_ENV
+          echo "IS_LATEST=$(jq -r .release.tag_name "$GITHUB_EVENT_PATH" | grep -c 'latest')" >> $GITHUB_ENV
+
+      - name: Merge Main into Latest-Release
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b latest-release
+          git pull origin main
+          git push origin latest-release --force

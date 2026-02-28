@@ -1,71 +1,66 @@
-# xdebug-profiler-viewer README
+# Xdebug Profile Viewer
 
-This is the README for your extension "xdebug-profiler-viewer". After writing up a brief description, we recommend including the following sections.
+Xdebug Profile Viewer is a VS Code extension that opens Cachegrind/Xdebug profiler files in a visual custom editor.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- Automatically opens profiler files in a custom readonly editor:
+  - `cachegrind.out.*`
+  - `*.out`
+  - `*.cachegrind`
+  - `*.cg`
+- Hotspots table with sortable columns.
+- Function-level self metrics (CPU/memory), averages per call, and criticality.
+- Caller/callee lists for the selected function.
+- `Open source` action (file + line) when source location is available.
+- UI localization:
+  - Portuguese when VS Code language starts with `pt`
+  - English otherwise
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- VS Code `^1.109.0`
+
+## Run in Development
+
+1. Install dependencies:
+   - `npm install`
+2. Compile:
+   - `npm run compile`
+3. Start Extension Development Host:
+   - Press `F5` in VS Code
+4. Open a Cachegrind profile file.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+This extension contributes:
 
-For example:
+- `xdebugProfileViewer.pathMappings`
+  - Type: `object`
+  - Default: `{}`
+  - Description: map source path prefixes from profiler output to local workspace paths.
 
-This extension contributes the following settings:
+Example:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+```json
+{
+  "xdebugProfileViewer.pathMappings": {
+    "/container/app": "/local/workspace/app"
+  }
+}
+```
 
-## Known Issues
+## Source Resolution Strategy
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+When `Open source` is triggered, the extension tries:
 
-## Release Notes
+1. `pathMappings` (longest matching prefix first)
+2. direct absolute/relative path resolution
+3. workspace suffix fallback search
 
-Users appreciate release notes as you update your extension.
+This makes container/remote-generated profiles usable on local workspaces.
 
-### 1.0.0
+## Notes
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- Cachegrind data is aggregated by function, so per-call min/max values are not available unless present in the source data.
+- CPU/memory columns appear based on events detected in the profiler file.

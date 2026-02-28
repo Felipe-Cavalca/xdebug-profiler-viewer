@@ -9,15 +9,45 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCustomEditor:xdebugProfileViewer.viewer"
+  ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
+    "customEditors": [
       {
-        "command": "xdebug-profiler-viewer.helloWorld",
-        "title": "Hello World"
+        "viewType": "xdebugProfileViewer.viewer",
+        "displayName": "Xdebug Profile Viewer",
+        "selector": [
+          {
+            "filenamePattern": "cachegrind.out.*"
+          },
+          {
+            "filenamePattern": "*.out"
+          },
+          {
+            "filenamePattern": "*.cachegrind"
+          },
+          {
+            "filenamePattern": "*.cg"
+          }
+        ],
+        "priority": "default"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Xdebug Profile Viewer",
+      "properties": {
+        "xdebugProfileViewer.pathMappings": {
+          "type": "object",
+          "default": {},
+          "description": "Map source path prefixes from profile files to local workspace paths. Example: {\"/var/www/html\":\"D:/Projetos/Bifrost-API\"}",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

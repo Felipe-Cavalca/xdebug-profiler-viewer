@@ -20,6 +20,7 @@ fn=work
 10 30 4`;
 function parseCachegrind(content) {
     const events = ['cost'];
+    let eventScaleNs = {};
     let primaryEvent = 'cost';
     let summary;
     let summaryByEvent = {};
@@ -45,6 +46,13 @@ function parseCachegrind(content) {
                 .filter(Boolean);
             if (eventNames.length > 0) {
                 events.splice(0, events.length, ...eventNames);
+                eventScaleNs = {};
+                for (const eventName of eventNames) {
+                    const scaleNs = extractTimeScaleNs(eventName);
+                    if (scaleNs !== undefined) {
+                        eventScaleNs[eventName] = scaleNs;
+                    }
+                }
                 primaryEvent = eventNames[0];
             }
             continue;
@@ -173,6 +181,7 @@ function parseCachegrind(content) {
     const profile = {
         events,
         primaryEvent,
+        eventScaleNs,
         summary,
         summaryByEvent,
         metadata,
@@ -425,5 +434,56 @@ function computeSelfTotals(functions, events) {
 }
 function isDevMode() {
     return process.env.NODE_ENV !== 'production';
+}
+function extractTimeScaleNs(eventName) {
+    const text = String(eventName || '').toLowerCase();
+    if (!/time|ns|us|µs|μs|ms|sec|second|minute|hour/.test(text)) {
+        return undefined;
+    }
+    const tuple = text.match(/\((\d+(?:[.,]\d+)?)\s*(ns|us|µs|μs|ms|s|nsec|usec|msec|sec)\)/i);
+    if (tuple) {
+        const amount = Number(tuple[1].replace(',', '.'));
+        const unit = tuple[2].toLowerCase();
+        return amount * unitToNs(unit);
+    }
+    const inline = text.match(/(\d+(?:[.,]\d+)?)\s*(ns|us|µs|μs|ms|s|nsec|usec|msec|sec)\b/i);
+    if (inline) {
+        const amount = Number(inline[1].replace(',', '.'));
+        const unit = inline[2].toLowerCase();
+        return amount * unitToNs(unit);
+    }
+    if (/\bns\b/i.test(text)) {
+        return 1;
+    }
+    if (/\b(us|µs|μs)\b/i.test(text)) {
+        return 1e3;
+    }
+    if (/\bms\b/i.test(text)) {
+        return 1e6;
+    }
+    if (/\bs\b|sec|second/i.test(text)) {
+        return 1e9;
+    }
+    return undefined;
+}
+function unitToNs(unit) {
+    switch (unit) {
+        case 'ns':
+        case 'nsec':
+            return 1;
+        case 'us':
+        case 'µs':
+        case 'μs':
+        case 'usec':
+            return 1e3;
+        case 'ms':
+        case 'msec':
+            return 1e6;
+        case 's':
+        case 'sec':
+            return 1e9;
+        default:
+            return 1;
+    }
 }
 //# sourceMappingURL=parser.js.map

@@ -62,6 +62,7 @@ export class XdebugProfileReadonlyEditorProvider
 			return {
 				events: ['cost'],
 				primaryEvent: 'cost',
+				eventScaleNs: {},
 				summaryByEvent: {},
 				metadata: {},
 				totalSelf: 0,
@@ -522,7 +523,9 @@ export class XdebugProfileReadonlyEditorProvider
 		th:nth-child(6), td:nth-child(6),
 		th:nth-child(7), td:nth-child(7),
 		th:nth-child(8), td:nth-child(8),
-		th:nth-child(9), td:nth-child(9) {
+		th:nth-child(9), td:nth-child(9),
+		th:nth-child(10), td:nth-child(10),
+		th:nth-child(11), td:nth-child(11) {
 			width: 1%;
 			white-space: nowrap;
 		}
@@ -559,6 +562,21 @@ export class XdebugProfileReadonlyEditorProvider
 		.crit-medium { color: #c9d463; }
 		.crit-high { color: #f0b25d; }
 		.crit-critical { color: #f47d7d; }
+		.severity-inline {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+		}
+		.sev-dot {
+			width: 8px;
+			height: 8px;
+			border-radius: 999px;
+			display: inline-block;
+		}
+		.sev-low { background: #7fd39f; }
+		.sev-medium { background: #c9d463; }
+		.sev-high { background: #f0b25d; }
+		.sev-critical { background: #f47d7d; }
 		.badge {
 			display: inline-flex;
 			align-items: center;
@@ -578,6 +596,12 @@ export class XdebugProfileReadonlyEditorProvider
 			min-height: 0;
 			overflow: auto;
 		}
+		.side-block {
+			border: 2px solid color-mix(in srgb, var(--border) 85%, transparent);
+			border-radius: 10px;
+			background: color-mix(in srgb, var(--card-alt) 25%, transparent);
+			padding: 10px;
+		}
 		.section-title {
 			font-size: 12px;
 			color: var(--muted);
@@ -589,6 +613,43 @@ export class XdebugProfileReadonlyEditorProvider
 			display: grid;
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			gap: 6px;
+		}
+		.metric-groups {
+			display: grid;
+			gap: 10px;
+			grid-template-columns: 1fr;
+		}
+		.metric-group {
+			display: grid;
+			gap: 6px;
+			align-content: start;
+			border: 2px solid color-mix(in srgb, var(--border) 90%, transparent);
+			border-radius: 10px;
+			background: color-mix(in srgb, var(--card-alt) 30%, transparent);
+			padding: 10px;
+		}
+		.metric-group .section-title {
+			margin-bottom: 0;
+			font-size: 11px;
+			letter-spacing: 0.5px;
+		}
+		.group-head {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+		.group-line {
+			flex: 1;
+			height: 1px;
+			background: linear-gradient(
+				to right,
+				color-mix(in srgb, var(--accent) 50%, var(--border) 50%),
+				color-mix(in srgb, var(--border) 65%, transparent)
+			);
+			opacity: 0.65;
+		}
+		.metric-group .metric-grid {
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 		}
 		.metric {
 			border: 1px solid var(--border);
@@ -674,9 +735,11 @@ export class XdebugProfileReadonlyEditorProvider
 							<th data-sort="criticality">${sortableHeader(ui.criticality, ui.tipCriticality)}</th>
 							<th data-sort="cpuSelf">${sortableHeader(ui.cpuSelf, ui.tipCpuSelf)}</th>
 							<th data-sort="memSelf">${sortableHeader(ui.memSelf, ui.tipMemSelf)}</th>
+							<th data-sort="timeTotal">${sortableHeader(ui.timeTotal, ui.tipTimeTotal)}</th>
 							<th data-sort="calls">${sortableHeader(ui.calls, ui.tipCalls)}</th>
 							<th data-sort="cpuAvg">${sortableHeader(ui.cpuAvg, ui.tipCpuAvg)}</th>
 							<th data-sort="memAvg">${sortableHeader(ui.memAvg, ui.tipMemAvg)}</th>
+							<th data-sort="timeAvg">${sortableHeader(ui.timeAvg, ui.tipTimeAvg)}</th>
 							<th data-sort="pctSelf">${sortableHeader(ui.pctSelf, ui.tipPctSelf)}</th>
 						</tr>
 					</thead>
@@ -700,19 +763,19 @@ export class XdebugProfileReadonlyEditorProvider
 				<div class="meta" id="selectedLocation">${escapeHtmlAttr(ui.source)}: ${escapeHtmlAttr(ui.unknown)}</div>
 			</div>
 			<div class="side-content">
-				<div>
+				<div class="side-block">
 					<div class="section-title">${escapeHtmlAttr(ui.metrics)}</div>
-					<div class="metric-grid" id="selectedMetrics"></div>
+					<div class="metric-groups" id="selectedMetrics"></div>
 				</div>
-				<div>
+				<div class="side-block">
 					<div class="section-title">${escapeHtmlAttr(ui.structure)}</div>
 					<div class="metric-grid" id="selectedStructure"></div>
 				</div>
-				<div>
+				<div class="side-block">
 					<div class="section-title"><span class="info-wrap"><span>${escapeHtmlAttr(ui.callers)}</span><span class="info-dot" data-tip="${escapeHtmlAttr(ui.tipCallersSection)}">i</span></span></div>
 					<div class="list" id="callersList"></div>
 				</div>
-				<div>
+				<div class="side-block">
 					<div class="section-title"><span class="info-wrap"><span>${escapeHtmlAttr(ui.callees)}</span><span class="info-dot" data-tip="${escapeHtmlAttr(ui.tipCalleesSection)}">i</span></span></div>
 					<div class="list" id="calleesList"></div>
 				</div>
@@ -759,6 +822,8 @@ export class XdebugProfileReadonlyEditorProvider
 			callsEffective: ui.helpCallsEffective,
 			cpuAvg: ui.helpCpuAvg,
 			memAvg: ui.helpMemAvg,
+			timeTotal: ui.helpTimeTotal,
+			timeAvg: ui.helpTimeAvg,
 			avgSelf: ui.helpAvgSelf,
 			avgInclusive: ui.helpAvgInclusive,
 			pctTotal: ui.helpPctSelf,
@@ -866,10 +931,12 @@ export class XdebugProfileReadonlyEditorProvider
 				const selfPrimary = getPrimarySelf(fn);
 				const cpuSelf = cpuEvent ? getEventSelf(fn, cpuEvent) : 0;
 				const memSelf = memEvent ? getEventSelf(fn, memEvent) : 0;
+				const timeTotal = cpuEvent ? getEventInclusive(fn, cpuEvent) : 0;
 				const callsObserved = Number(fn.callsObserved || 0);
 				const callsEffective = Number(fn.callsEffective || 0);
 				const cpuAvg = callsEffective > 0 ? cpuSelf / callsEffective : 0;
 				const memAvg = callsEffective > 0 ? memSelf / callsEffective : 0;
+				const timeAvg = callsEffective > 0 ? timeTotal / callsEffective : 0;
 				const pct = ratio(selfPrimary, primarySelfTotal);
 				const criticalityPct = computeCriticalityPct(fn, cpuSelf, memSelf);
 				row.innerHTML =
@@ -881,9 +948,11 @@ export class XdebugProfileReadonlyEditorProvider
 					'<td>' + formatCriticality(criticalityPct) + '</td>' +
 					'<td>' + (cpuEvent ? formatMetric(cpuSelf, cpuEvent) : '-') + '</td>' +
 					'<td>' + (memEvent ? formatMetric(memSelf, memEvent) : '-') + '</td>' +
+					'<td>' + (cpuEvent ? formatMetric(timeTotal, cpuEvent) : '-') + '</td>' +
 					'<td>' + formatInt(callsObserved) + '</td>' +
 					'<td>' + (cpuEvent ? formatMetric(cpuAvg, cpuEvent) : '-') + '</td>' +
 					'<td>' + (memEvent ? formatMetric(memAvg, memEvent) : '-') + '</td>' +
+					'<td>' + (cpuEvent ? formatMetric(timeAvg, cpuEvent) : '-') + '</td>' +
 					'<td>' + pct.toFixed(2) + '%</td>';
 				row.addEventListener('click', () => {
 					selectedId = fn.id;
@@ -951,31 +1020,48 @@ export class XdebugProfileReadonlyEditorProvider
 			const topCalleeCost = topCallee ? getEdgeInclusive(topCallee, primaryEvent) : 0;
 			const topCalleeShare = delegated > 0 ? clampPct((topCalleeCost / Math.max(delegated, 1)) * 100) : 0;
 			const depthMin = primaryGraphCache.depthById.has(fn.id) ? primaryGraphCache.depthById.get(fn.id) : undefined;
-			const selectedCards = [
+			const cpuCards = [];
+			const memoryCards = [];
+			const timeCards = [];
+			const otherCards = [];
+			otherCards.push(
 				metric(ui.callsObserved, formatInt(callsObserved), metricHelp.callsObserved),
 				metric(ui.callsEffective, formatInt(callsEffective), metricHelp.callsEffective),
-				metric(ui.selfCost, formatMetric(selfPrimary, primaryEvent), metricHelp.selfCost),
-				metric(ui.inclusiveCost, formatMetric(inclusivePrimary, primaryEvent), metricHelp.inclusiveCost),
-				metricRaw(ui.criticality, formatCriticality(criticalityPct), metricHelp.criticality)
-			];
-			if (cpuEvent || memEvent) {
-				selectedCards.push(
-					metric(ui.cpuSelf, cpuEvent ? formatMetric(cpuSelf || 0, cpuEvent) : '-', metricHelp.cpuSelf),
-					metric(ui.memSelf, memEvent ? formatMetric(memSelf || 0, memEvent) : '-', metricHelp.memSelf),
-					metric(ui.cpuAvg, cpuEvent ? formatMetric(cpuAvg, cpuEvent) : '-', metricHelp.cpuAvg),
-					metric(ui.memAvg, memEvent ? formatMetric(memAvg, memEvent) : '-', metricHelp.memAvg),
-					metric(ui.avgSelf, formatMetric(avgSelf, primaryEvent), metricHelp.avgSelf),
-					metric(ui.avgInclusive, formatMetric(avgInclusive, primaryEvent), metricHelp.avgInclusive),
-					metric(ui.cpuShare, cpuEvent ? formatPercent(cpuShare) : formatPercent(selfSharePrimary), metricHelp.cpuShare),
-					metric(ui.memShare, memEvent ? formatPercent(memShare) : '-', metricHelp.memShare)
+				metricRaw(ui.criticality, formatSeverityWithLabel(criticalityPct, getCriticalityLabel(criticalityPct) + ' ' + criticalityPct.toFixed(1) + '%'), metricHelp.criticality),
+				metricRaw(ui.hotPathScore, formatSeverityPercent(hotPathScore), metricHelp.hotPathScore),
+				metricRaw(ui.churnRisk, formatSeverityPercent(churnRisk), metricHelp.churnRisk)
+			);
+			if (cpuEvent) {
+				cpuCards.push(
+					metric(ui.cpuSelf, formatMetric(cpuSelf || 0, cpuEvent), metricHelp.cpuSelf),
+					metric(ui.cpuAvg, formatMetric(cpuAvg, cpuEvent), metricHelp.cpuAvg),
+					metricRaw(ui.cpuShare, formatSeverityPercent(cpuShare), metricHelp.cpuShare)
 				);
 			}
-			if (cpuEvent || memEvent) {
-				selectedCards.push(metricRaw(ui.hotPathScore, formatSeverityPercent(hotPathScore), metricHelp.hotPathScore));
-				selectedCards.push(metricRaw(ui.churnRisk, formatSeverityPercent(churnRisk), metricHelp.churnRisk));
+			if (memEvent) {
+				memoryCards.push(
+					metric(ui.memSelf, formatMetric(memSelf || 0, memEvent), metricHelp.memSelf),
+					metric(ui.memAvg, formatMetric(memAvg, memEvent), metricHelp.memAvg),
+					metricRaw(ui.memShare, formatSeverityPercent(memShare), metricHelp.memShare)
+				);
+			}
+			timeCards.push(
+				metric(ui.selfCost, formatMetric(selfPrimary, primaryEvent), metricHelp.selfCost),
+				metric(ui.inclusiveCost, formatMetric(inclusivePrimary, primaryEvent), metricHelp.inclusiveCost),
+				metric(ui.avgSelf, formatMetric(avgSelf, primaryEvent), metricHelp.avgSelf),
+				metric(ui.avgInclusive, formatMetric(avgInclusive, primaryEvent), metricHelp.avgInclusive)
+			);
+			if (cpuEvent) {
+				timeCards.push(
+					metric(ui.timeTotal, formatMetric(inclusivePrimary, cpuEvent), metricHelp.timeTotal),
+					metric(ui.timeAvg, formatMetric(avgInclusive, cpuEvent), metricHelp.timeAvg)
+				);
 			}
 			selectedMetrics.innerHTML = [
-				...selectedCards
+				renderMetricGroup(ui.groupCpu, cpuCards),
+				renderMetricGroup(ui.groupMemory, memoryCards),
+				renderMetricGroup(ui.groupTime, timeCards),
+				renderMetricGroup(ui.groupOther, otherCards)
 			].join('');
 			const topCalleeValue = topCallee
 				? escapeHtml(topCallee.name) + '<br><span class="fn-sub">' + escapeHtml(
@@ -1250,8 +1336,18 @@ export class XdebugProfileReadonlyEditorProvider
 			if (!Number.isFinite(score)) {
 				return '-';
 			}
-			const klass = getCriticalityClass(score);
-			return '<span class="crit-badge ' + klass + '">' + escapeHtml(score.toFixed(2) + '%') + '</span>';
+			return formatSeverityWithLabel(score, score.toFixed(2) + '%');
+		}
+
+		function formatSeverityWithLabel(score, label) {
+			if (!Number.isFinite(score)) {
+				return '-';
+			}
+			const klass = getCriticalityClass(score).replace('crit-', 'sev-');
+			return '<span class="severity-inline">' +
+				'<span class="sev-dot ' + klass + '"></span>' +
+				'<span>' + escapeHtml(label) + '</span>' +
+			'</span>';
 		}
 
 		function matchesQuery(text, query) {
@@ -1283,7 +1379,87 @@ export class XdebugProfileReadonlyEditorProvider
 			if (/mem|byte/i.test(eventName)) {
 				return formatBytes(value);
 			}
+			if (isTimeEvent(eventName)) {
+				return formatTime(value, eventName);
+			}
 			return formatInt(value);
+		}
+
+		function isTimeEvent(eventName) {
+			return /time|ns|us|µs|μs|ms|sec|second|minute|hour/i.test(String(eventName || ''));
+		}
+
+		function formatTime(value, eventName) {
+			const scaleNs = getTimeScaleNs(eventName);
+			if (!scaleNs) {
+				return formatInt(value) + ' ticks';
+			}
+			const totalNs = Number(value || 0) * scaleNs;
+			const abs = Math.abs(totalNs);
+			if (abs >= 1e9) {
+				return (totalNs / 1e9).toFixed(2) + ' s';
+			}
+			if (abs >= 1e6) {
+				return (totalNs / 1e6).toFixed(2) + ' ms';
+			}
+			if (abs >= 1e3) {
+				return (totalNs / 1e3).toFixed(2) + ' us';
+			}
+			return totalNs.toFixed(0) + ' ns';
+		}
+
+		function getTimeScaleNs(eventName) {
+			const declared = profile.eventScaleNs && profile.eventScaleNs[eventName];
+			if (Number.isFinite(Number(declared)) && Number(declared) > 0) {
+				return Number(declared);
+			}
+			const text = String(eventName || '').toLowerCase();
+			const tuple = text.match(/\((\d+(?:[.,]\d+)?)\s*(ns|us|µs|μs|ms|s|nsec|usec|msec|sec)\)/i);
+			if (tuple) {
+				const amount = Number(tuple[1].replace(',', '.'));
+				const unit = tuple[2].toLowerCase();
+				return amount * unitToNs(unit);
+			}
+			const inline = text.match(/(\d+(?:[.,]\d+)?)\s*(ns|us|µs|μs|ms|s|nsec|usec|msec|sec)\b/i);
+			if (inline) {
+				const amount = Number(inline[1].replace(',', '.'));
+				const unit = inline[2].toLowerCase();
+				return amount * unitToNs(unit);
+			}
+			if (/\bns\b/i.test(text)) {
+				return 1;
+			}
+			if (/\b(us|µs|μs)\b/i.test(text)) {
+				return 1e3;
+			}
+			if (/\bms\b/i.test(text)) {
+				return 1e6;
+			}
+			if (/\bs\b|sec|second/i.test(text)) {
+				return 1e9;
+			}
+			return undefined;
+		}
+
+		function unitToNs(unit) {
+			switch (unit) {
+				case 'ns':
+				case 'nsec':
+					return 1;
+				case 'us':
+				case 'µs':
+				case 'μs':
+				case 'usec':
+					return 1e3;
+				case 'ms':
+				case 'msec':
+					return 1e6;
+				case 's':
+				case 'sec':
+					return 1e9;
+				default:
+					return 1;
+			}
 		}
 
 		function formatPercent(value) {
@@ -1354,6 +1530,19 @@ export class XdebugProfileReadonlyEditorProvider
 
 		function metricRaw(label, valueHtml, tip) {
 			return '<div class="metric"><div class="m-label">' + info(label, tip) + '</div><div class="m-value">' + valueHtml + '</div></div>';
+		}
+
+		function renderMetricGroup(title, cards) {
+			if (!cards || cards.length === 0) {
+				return '';
+			}
+			return '<div class="metric-group">' +
+				'<div class="group-head">' +
+					'<div class="section-title">' + escapeHtml(title) + '</div>' +
+					'<div class="group-line"></div>' +
+				'</div>' +
+				'<div class="metric-grid">' + cards.join('') + '</div>' +
+			'</div>';
 		}
 
 		function info(label, tip) {
@@ -1522,6 +1711,7 @@ export class XdebugProfileReadonlyEditorProvider
 		function getSortValue(fn, key) {
 			const cpuSelf = cpuEvent ? getEventSelf(fn, cpuEvent) : 0;
 			const memSelf = memEvent ? getEventSelf(fn, memEvent) : 0;
+			const timeTotal = cpuEvent ? getEventInclusive(fn, cpuEvent) : 0;
 			const callsObserved = Number(fn.callsObserved || 0);
 			const callsEffective = Number(fn.callsEffective || 0);
 			switch (key) {
@@ -1533,12 +1723,16 @@ export class XdebugProfileReadonlyEditorProvider
 					return cpuSelf;
 				case 'memSelf':
 					return memSelf;
+				case 'timeTotal':
+					return timeTotal;
 				case 'calls':
 					return callsObserved;
 				case 'cpuAvg':
 					return callsEffective > 0 ? cpuSelf / callsEffective : 0;
 				case 'memAvg':
 					return callsEffective > 0 ? memSelf / callsEffective : 0;
+				case 'timeAvg':
+					return callsEffective > 0 ? timeTotal / callsEffective : 0;
 				case 'pctSelf': {
 					const selfPrimary = getPrimarySelf(fn);
 					return ratio(selfPrimary, primarySelfTotal);

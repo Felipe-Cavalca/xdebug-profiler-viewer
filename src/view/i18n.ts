@@ -10,6 +10,8 @@ export interface UiStrings {
 	calls: string;
 	cpuAvg: string;
 	memAvg: string;
+	timeTotal: string;
+	timeAvg: string;
 	avgSelf: string;
 	avgInclusive: string;
 	pctSelf: string;
@@ -26,6 +28,8 @@ export interface UiStrings {
 	tipCalls: string;
 	tipCpuAvg: string;
 	tipMemAvg: string;
+	tipTimeTotal: string;
+	tipTimeAvg: string;
 	tipPctSelf: string;
 	tipCpuShare: string;
 	tipMemShare: string;
@@ -43,6 +47,10 @@ export interface UiStrings {
 	source: string;
 	unknown: string;
 	metrics: string;
+	groupCpu: string;
+	groupMemory: string;
+	groupTime: string;
+	groupOther: string;
 	structure: string;
 	callers: string;
 	callees: string;
@@ -82,6 +90,8 @@ export interface UiStrings {
 	helpCalls: string;
 	helpCpuAvg: string;
 	helpMemAvg: string;
+	helpTimeTotal: string;
+	helpTimeAvg: string;
 	helpAvgSelf: string;
 	helpAvgInclusive: string;
 	helpPctSelf: string;
@@ -118,6 +128,8 @@ export function getUiStrings(language: string): UiStrings {
 			calls: 'Chamadas',
 			cpuAvg: 'CPU Media',
 			memAvg: 'Mem Media',
+			timeTotal: 'Tempo Total',
+			timeAvg: 'Tempo Medio',
 			avgSelf: 'Media Self',
 			avgInclusive: 'Media Inclusive',
 			pctSelf: '% Self',
@@ -134,6 +146,8 @@ export function getUiStrings(language: string): UiStrings {
 			tipCalls: 'Resumo: quantidade de chamadas observadas no arquivo.\n\nExemplo: 12.000 chamadas pode indicar gargalo por frequencia.',
 			tipCpuAvg: 'Resumo: custo medio de CPU por chamada efetiva.\n\nExemplo: CPU Self 90.000 / 300 = 300 por chamada.',
 			tipMemAvg: 'Resumo: custo medio de memoria por chamada efetiva.\n\nExemplo: Mem Self 600 KB / 200 = 3 KB por chamada.',
+			tipTimeTotal: 'Resumo: tempo total da funcao no evento de tempo (inclusive).\n\nExemplo: inclui custo local e custo delegado.',
+			tipTimeAvg: 'Resumo: tempo medio por chamada efetiva.\n\nFormula: Tempo Total / Calls Effective.',
 			tipPctSelf: 'Resumo: fatia de self da funcao no total primario.\n\nExemplo: 7,5% significa 7,5% do custo self total do arquivo.',
 			tipCpuShare: 'Resumo: fatia da funcao no total de CPU self.\n\nExemplo: 12% sugere bom potencial de ganho ao otimizar.',
 			tipMemShare: 'Resumo: fatia da funcao no total de memoria self.\n\nExemplo: 18% indica bom alvo para reduzir alocacao.',
@@ -151,6 +165,10 @@ export function getUiStrings(language: string): UiStrings {
 			source: 'Origem',
 			unknown: 'desconhecido',
 			metrics: 'Metricas',
+			groupCpu: 'CPU',
+			groupMemory: 'Memoria',
+			groupTime: 'Tempo',
+			groupOther: 'Outras',
 			structure: 'Estrutura',
 			callers: 'Chamadores',
 			callees: 'Chamadas',
@@ -190,6 +208,8 @@ export function getUiStrings(language: string): UiStrings {
 			helpCalls: 'Resumo: quantidade de invocacoes da funcao.\n\nExemplo: muitas chamadas com custo baixo = hotspot de frequencia.',
 			helpCpuAvg: 'Resumo: media de CPU por chamada efetiva.\n\nExemplo: ajuda a achar custo unitario alto.',
 			helpMemAvg: 'Resumo: media de memoria por chamada efetiva.\n\nExemplo: ajuda a achar alocacao cara por invocacao.',
+			helpTimeTotal: 'Resumo: tempo total da funcao no evento de tempo (inclusive).\n\nExemplo: representa custo total no fluxo.',
+			helpTimeAvg: 'Resumo: tempo medio por chamada efetiva.\n\nExemplo: bom para comparar custo unitario.',
 			helpAvgSelf: 'Resumo: self medio por chamada efetiva.\n\nExemplo: compara custo local entre funcoes.',
 			helpAvgInclusive: 'Resumo: inclusive medio por chamada efetiva.\n\nExemplo: compara custo total por chamada.',
 			helpPctSelf: 'Resumo: participacao self no total primario.\n\nExemplo: 7,5% = impacto relevante no arquivo atual.',
@@ -224,6 +244,8 @@ export function getUiStrings(language: string): UiStrings {
 		calls: 'Calls',
 		cpuAvg: 'CPU Avg',
 		memAvg: 'Mem Avg',
+		timeTotal: 'Time Total',
+		timeAvg: 'Time Avg',
 		avgSelf: 'Avg Self',
 		avgInclusive: 'Avg Inclusive',
 		pctSelf: '% Self',
@@ -240,6 +262,8 @@ export function getUiStrings(language: string): UiStrings {
 		tipCalls: 'Summary: observed call count from the file.\n\nExample: 12,000 calls may indicate frequency pressure.',
 		tipCpuAvg: 'Summary: average CPU per effective call.\n\nExample: 90,000 / 300 = 300 per call.',
 		tipMemAvg: 'Summary: average memory per effective call.\n\nExample: 600 KB / 200 = 3 KB per call.',
+		tipTimeTotal: 'Summary: total function time on the time event (inclusive).\n\nExample: includes local and delegated work.',
+		tipTimeAvg: 'Summary: average time per effective call.\n\nFormula: Time Total / Calls Effective.',
 		tipPctSelf: 'Summary: self share over primary total.\n\nExample: 7.5% means relevant contribution in this file.',
 		tipCpuShare: 'Summary: function share over total CPU self.\n\nExample: 12% can be a good optimization target.',
 		tipMemShare: 'Summary: function share over total memory self.\n\nExample: 18% can be a strong memory target.',
@@ -257,6 +281,10 @@ export function getUiStrings(language: string): UiStrings {
 		source: 'Source',
 		unknown: 'unknown',
 		metrics: 'Metrics',
+		groupCpu: 'CPU',
+		groupMemory: 'Memory',
+		groupTime: 'Time',
+		groupOther: 'Other',
 		structure: 'Structure',
 		callers: 'Callers',
 		callees: 'Callees',
@@ -296,6 +324,8 @@ export function getUiStrings(language: string): UiStrings {
 		helpCalls: 'Summary: number of invocations.\n\nExample: many cheap calls can still create pressure.',
 		helpCpuAvg: 'Summary: average CPU per effective call.\n\nExample: useful to spot high unit cost.',
 		helpMemAvg: 'Summary: average memory per effective call.\n\nExample: useful to spot costly allocations per call.',
+		helpTimeTotal: 'Summary: total function time on time event (inclusive).\n\nExample: represents full flow cost.',
+		helpTimeAvg: 'Summary: average function time per effective call.\n\nExample: useful to compare unit time cost.',
 		helpAvgSelf: 'Summary: average self cost per effective call.\n\nExample: compare local work across functions.',
 		helpAvgInclusive: 'Summary: average inclusive cost per effective call.\n\nExample: compare total chain cost per call.',
 		helpPctSelf: 'Summary: self share over primary total.\n\nExample: 7.5% is usually significant in one file.',

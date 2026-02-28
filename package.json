@@ -10,7 +10,10 @@
     "Other"
   ],
   "activationEvents": [
-    "onCustomEditor:xdebugProfileViewer.viewer"
+    "onCustomEditor:xdebugProfileViewer.viewer",
+    "onLanguage:php",
+    "onLanguage:php8",
+    "onLanguage:phtml"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -45,6 +48,29 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "xdebugProfileViewer.codeLens.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable risk CodeLens above PHP function declarations."
+        },
+        "xdebugProfileViewer.codeLens.profilerIndexDebounceMs": {
+          "type": "number",
+          "default": 350,
+          "minimum": 0,
+          "description": "Debounce delay (ms) before indexing a created/changed profiler file."
+        },
+        "xdebugProfileViewer.codeLens.profilerIndexRetryMs": {
+          "type": "number",
+          "default": 900,
+          "minimum": 100,
+          "description": "Retry delay (ms) when a profiler file is detected but still incomplete for parsing."
+        },
+        "xdebugProfileViewer.codeLens.profilerIndexMaxRetries": {
+          "type": "number",
+          "default": 3,
+          "minimum": 0,
+          "description": "Maximum retry attempts for indexing a newly created/updated profiler file."
         }
       }
     }

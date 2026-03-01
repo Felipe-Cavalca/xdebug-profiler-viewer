@@ -22,6 +22,17 @@ Xdebug Profile Viewer is a VS Code extension that opens Cachegrind/Xdebug profil
 
 - VS Code `^1.109.0`
 
+## Release Automation
+
+- Tags are generated in the format `0.0.0-0`.
+- The extension package version is set from the generated tag during CI publish.
+- Release vs pre-release is defined by the PR label `release` (not by the `-` in tag format).
+
+Before publishing to VS Code Marketplace, ensure:
+
+1. `package.json` has a valid `publisher` field (your Marketplace publisher id).
+2. Repository secret `VSCE_PAT` is configured.
+
 ## Run in Development
 
 1. Install dependencies:

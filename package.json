@@ -2,7 +2,8 @@
   "name": "xdebug-profiler-viewer",
   "displayName": "xdebug profiler viewer",
   "description": "A extension to view xdebug profiler files.",
-  "version": "0.0.1",
+  "version": "0.0.0-0",
+  "publisher": "ScriptTech",
   "engines": {
     "vscode": "^1.109.0"
   },

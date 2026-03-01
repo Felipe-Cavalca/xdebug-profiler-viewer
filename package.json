@@ -3,7 +3,7 @@
   "displayName": "xdebug profiler viewer",
   "description": "A extension to view xdebug profiler files.",
   "version": "0.0.0-0",
-  "publisher": "ScriptTech",
+  "publisher": "felipecavalca",
   "engines": {
     "vscode": "^1.109.0"
   },

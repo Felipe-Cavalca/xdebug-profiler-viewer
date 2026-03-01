@@ -25,6 +25,7 @@ jobs:
     outputs:
       tag: ${{ steps.version.outputs.tag }}
       version: ${{ steps.version.outputs.version }}
+      package_version: ${{ steps.version.outputs.package_version }}
       is_prerelease: ${{ steps.version.outputs.is_prerelease }}
       is_release: ${{ steps.version.outputs.is_release }}
     steps:
@@ -47,10 +48,15 @@ jobs:
 
           TAG="${RAW_TAG#refs/tags/}"
           VERSION="${TAG#v}"
+          PACKAGE_VERSION="${VERSION%%-*}"
 
           if ! [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
             echo "Invalid tag/version format: ${TAG}"
             echo "Expected formats: 1.2.3, v1.2.3, 1.2.3-4, v1.2.3-beta.1"
+            exit 1
+          fi
+          if ! [[ "${PACKAGE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid package version extracted from tag: ${PACKAGE_VERSION}"
             exit 1
           fi
 
@@ -72,13 +78,15 @@ jobs:
 
           echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "package_version=${PACKAGE_VERSION}" >> "${GITHUB_OUTPUT}"
           echo "is_prerelease=${IS_PRERELEASE}" >> "${GITHUB_OUTPUT}"
           echo "is_release=${IS_RELEASE}" >> "${GITHUB_OUTPUT}"
 
       - name: Print metadata
         run: |
           echo "Tag: ${{ steps.version.outputs.tag }}"
-          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Tag version: ${{ steps.version.outputs.version }}"
+          echo "Package version: ${{ steps.version.outputs.package_version }}"
           echo "Release: ${{ steps.version.outputs.is_release }}"
           echo "Pre-release: ${{ steps.version.outputs.is_prerelease }}"
 
@@ -88,6 +96,6 @@ jobs:
     uses: ./.github/workflows/publish_store_vscode.yml
     with:
       tag: ${{ needs.prepare-release-metadata.outputs.tag }}
-      version: ${{ needs.prepare-release-metadata.outputs.version }}
+      version: ${{ needs.prepare-release-metadata.outputs.package_version }}
       is_prerelease: ${{ needs.prepare-release-metadata.outputs.is_prerelease }}
     secrets: inherit

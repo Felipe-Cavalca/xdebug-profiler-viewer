@@ -1,0 +1,66 @@
+name: Publish VS Code Store
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      is_prerelease:
+        required: true
+        type: string
+    secrets:
+      VSCE_PAT:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish extension in VS Code Marketplace
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate extension publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          PUBLISHER="$(node -p "require('./package.json').publisher || ''")"
+          if [ -z "${PUBLISHER}" ]; then
+            echo "package.json is missing the 'publisher' field."
+            echo "Set package.json.publisher to your Marketplace publisher id before publishing."
+            exit 1
+          fi
+          echo "Publisher: ${PUBLISHER}"
+
+      - name: Set package version from tag
+        run: npm version "${{ inputs.version }}" --no-git-tag-version --allow-same-version
+
+      - name: Publish to VS Code Marketplace
+        shell: bash
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+        run: |
+          set -euo pipefail
+          EXTRA_ARGS=()
+          if [ "${IS_PRERELEASE}" = "true" ]; then
+            EXTRA_ARGS+=(--pre-release)
+          fi
+
+          npx @vscode/vsce publish --pat "${VSCE_PAT}" "${EXTRA_ARGS[@]}"

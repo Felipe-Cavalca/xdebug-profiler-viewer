@@ -78,12 +78,14 @@ jobs:
         with:
           script: |
             const newTag = '${{ steps.create_tag.outputs.new_tag }}';
+            const isRelease = ${{ contains(github.event.pull_request.labels.*.name, 'release') }};
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: context.repo.repo,
               event_type: 'tag-created',
               client_payload: {
                 tag: newTag,
+                is_release: isRelease,
               },
             });
 

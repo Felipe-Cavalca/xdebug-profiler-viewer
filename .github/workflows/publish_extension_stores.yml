@@ -1,0 +1,93 @@
+name: Publish Extension Stores
+
+on:
+  repository_dispatch:
+    types: [tag-created]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (example: 1.2.3 or v1.2.3-4)"
+        required: true
+        type: string
+      is_release:
+        description: "If true, publish as stable release"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  prepare-release-metadata:
+    name: Prepare release metadata
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+      is_release: ${{ steps.version.outputs.is_release }}
+    steps:
+      - name: Resolve tag and version
+        id: version
+        shell: bash
+        env:
+          DISPATCH_TAG: ${{ github.event.client_payload.tag }}
+          DISPATCH_IS_RELEASE: ${{ github.event.client_payload.is_release }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          INPUT_IS_RELEASE: ${{ github.event.inputs.is_release }}
+        run: |
+          set -euo pipefail
+
+          RAW_TAG="${DISPATCH_TAG:-${INPUT_TAG:-}}"
+          if [ -z "${RAW_TAG}" ]; then
+            echo "Tag was not provided in dispatch payload or workflow input."
+            exit 1
+          fi
+
+          TAG="${RAW_TAG#refs/tags/}"
+          VERSION="${TAG#v}"
+
+          if ! [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid tag/version format: ${TAG}"
+            echo "Expected formats: 1.2.3, v1.2.3, 1.2.3-4, v1.2.3-beta.1"
+            exit 1
+          fi
+
+          RAW_IS_RELEASE="${DISPATCH_IS_RELEASE:-${INPUT_IS_RELEASE:-}}"
+          IS_RELEASE="false"
+          case "${RAW_IS_RELEASE}" in
+            true|True|TRUE|1) IS_RELEASE="true" ;;
+            false|False|FALSE|0|"") IS_RELEASE="false" ;;
+            *)
+              echo "Invalid is_release value: ${RAW_IS_RELEASE}"
+              exit 1
+              ;;
+          esac
+
+          IS_PRERELEASE="true"
+          if [ "${IS_RELEASE}" = "true" ]; then
+            IS_PRERELEASE="false"
+          fi
+
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "is_prerelease=${IS_PRERELEASE}" >> "${GITHUB_OUTPUT}"
+          echo "is_release=${IS_RELEASE}" >> "${GITHUB_OUTPUT}"
+
+      - name: Print metadata
+        run: |
+          echo "Tag: ${{ steps.version.outputs.tag }}"
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Release: ${{ steps.version.outputs.is_release }}"
+          echo "Pre-release: ${{ steps.version.outputs.is_prerelease }}"
+
+  publish-vscode:
+    name: Publish VS Code Marketplace
+    needs: prepare-release-metadata
+    uses: ./.github/workflows/publish_store_vscode.yml
+    with:
+      tag: ${{ needs.prepare-release-metadata.outputs.tag }}
+      version: ${{ needs.prepare-release-metadata.outputs.version }}
+      is_prerelease: ${{ needs.prepare-release-metadata.outputs.is_prerelease }}
+    secrets: inherit

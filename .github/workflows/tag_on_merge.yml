@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [closed]
 
+permissions:
+  contents: write
+
 jobs:
   create_tag_and_draft_release:
     runs-on: ubuntu-latest
@@ -124,8 +127,15 @@ jobs:
               });
             }
 
+  attach_release_vsix:
+    name: Attach VSIX to GitHub Release
+    needs: [create_tag_and_draft_release, publish_release]
+    uses: ./.github/workflows/release_vsix.yml
+    with:
+      tag: ${{ needs.create_tag_and_draft_release.outputs.new_tag }}
+
   update_branch_release:
-    needs: publish_release
+    needs: [publish_release, attach_release_vsix]
     if: contains(github.event.pull_request.labels.*.name, 'release')
     runs-on: ubuntu-latest
     steps:

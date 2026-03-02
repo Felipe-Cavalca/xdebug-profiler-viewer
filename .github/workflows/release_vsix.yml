@@ -9,6 +9,11 @@ on:
         description: "Release tag (example: 1.2.3 or v1.2.3-4)"
         required: true
         type: string
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -35,11 +40,12 @@ jobs:
         shell: bash
         env:
           EVENT_TAG: ${{ github.event.release.tag_name }}
-          INPUT_TAG: ${{ github.event.inputs.tag }}
+          DISPATCH_TAG: ${{ github.event.inputs.tag }}
+          CALL_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
 
-          RAW_TAG="${EVENT_TAG:-${INPUT_TAG:-}}"
+          RAW_TAG="${EVENT_TAG:-${DISPATCH_TAG:-${CALL_TAG:-}}}"
           if [ -z "${RAW_TAG}" ]; then
             echo "Tag not found in release event or workflow input."
             exit 1

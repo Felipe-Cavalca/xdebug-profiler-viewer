@@ -1,74 +1,58 @@
 # Xdebug Profile Viewer
 
-Xdebug Profile Viewer is a VS Code extension that opens Cachegrind/Xdebug profiler files in a visual custom editor.
+Turn Xdebug/Cachegrind profile files into actionable insights inside VS Code.
+
+**Xdebug Profile Viewer** opens your profiler in a visual interface, highlights hotspots, shows per-function change risk, and helps you find bottlenecks fast.
 
 ## Features
 
-- Automatically opens profiler files in a custom readonly editor:
+- Automatically opens profiler files in a visual readonly editor:
   - `cachegrind.out.*`
   - `*.out`
   - `*.cachegrind`
   - `*.cg`
-- Hotspots table with sortable columns.
-- Function-level self metrics (CPU/memory), averages per call, and criticality.
-- Caller/callee lists for the selected function.
-- `Open source` action (file + line) when source location is available.
-- CodeLens in PHP editors with `Risco de quebra: X%` per function, based on the latest profiler where that function appears.
-- UI localization:
+- Hotspots table with multi-metric sorting.
+- Per-function metrics: CPU, memory, average per call, self percentage, and criticality.
+- Detailed panel with call structure:
+  - callers (who calls it)
+  - callees (what it calls)
+  - fan-in, fan-out, risk, and optimization potential
+- `Open source` action to jump to file and line.
+- CodeLens in PHP files with `Breakage risk: X%` per function.
+- Localized UI:
   - Portuguese when VS Code language starts with `pt`
   - English otherwise
 
-## Requirements
+## Why use it
 
-- VS Code `^1.109.0`
+- Find real bottlenecks without leaving the editor.
+- Prioritize what to optimize based on impact.
+- Reduce refactor risk with coupling visibility.
+- Move from profile to source code in one click.
 
-## Release Automation
+## How it helps in practice
 
-- Tags are generated in the format `0.0.0-0`.
-- The extension package version is set from the generated tag during CI publish.
-- Release vs pre-release is defined by the PR label `release` (not by the `-` in tag format).
+1. You generate an Xdebug profile.
+2. You open the file in VS Code.
+3. The Viewer shows hotspots automatically.
+4. You filter functions, compare metrics, and choose what to optimize first.
+5. You use `Open source` to jump directly to the relevant code.
+6. In PHP files, CodeLens shows per-function risk based on indexed profiles.
 
-Before publishing to VS Code Marketplace, ensure:
-
-1. `package.json` has a valid `publisher` field (your Marketplace publisher id).
-2. Repository secret `VSCE_PAT` is configured.
-
-## Run in Development
-
-1. Install dependencies:
-   - `npm install`
-2. Compile:
-   - `npm run compile`
-3. Start Extension Development Host:
-   - Press `F5` in VS Code
-4. Open a Cachegrind profile file.
-
-## Extension Settings
-
-This extension contributes:
+## Main settings
 
 - `xdebugProfileViewer.pathMappings`
-  - Type: `object`
-  - Default: `{}`
-  - Description: map source path prefixes from profiler output to local workspace paths.
+  - Maps profile paths (for example, container paths) to local workspace paths.
 - `xdebugProfileViewer.codeLens.enabled`
-  - Type: `boolean`
-  - Default: `true`
-  - Description: enable/disable function risk CodeLens in PHP editors.
+  - Enables/disables risk CodeLens in PHP files.
 - `xdebugProfileViewer.codeLens.profilerIndexDebounceMs`
-  - Type: `number`
-  - Default: `350`
-  - Description: debounce (ms) for indexing profiler file create/change events.
+  - Controls debounce for new profile indexing.
 - `xdebugProfileViewer.codeLens.profilerIndexRetryMs`
-  - Type: `number`
-  - Default: `900`
-  - Description: retry delay (ms) when a new profiler file is still incomplete while being written.
+  - Defines retry delay when a profile file is still incomplete.
 - `xdebugProfileViewer.codeLens.profilerIndexMaxRetries`
-  - Type: `number`
-  - Default: `3`
-  - Description: max retry attempts for indexing a profiler file.
+  - Defines the maximum number of indexing retries.
 
-Example:
+`pathMappings` example:
 
 ```json
 {
@@ -78,17 +62,21 @@ Example:
 }
 ```
 
-## Source Resolution Strategy
+## Source resolution
 
-When `Open source` is triggered, the extension tries:
+When you use `Open source`, the extension tries:
 
 1. `pathMappings` (longest matching prefix first)
 2. direct absolute/relative path resolution
 3. workspace suffix fallback search
 
-This makes container/remote-generated profiles usable on local workspaces.
+This makes profiles generated in local, remote, or container environments usable in your workspace.
+
+## Requirements
+
+- VS Code `^1.109.0`
 
 ## Notes
 
-- Cachegrind data is aggregated by function, so per-call min/max values are not available unless present in the source data.
-- CPU/memory columns appear based on events detected in the profiler file.
+- Cachegrind data is aggregated by function. Per-call min/max values depend on the source profile data.
+- CPU/memory columns appear based on events detected in the profile file.

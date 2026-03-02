@@ -4,6 +4,10 @@
   "description": "A extension to view xdebug profiler files.",
   "version": "0.0.0-0",
   "publisher": "felipecavalca",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Felipe-Cavalca/xdebug-profiler-viewer.git"
+  },
   "engines": {
     "vscode": "^1.109.0"
   },

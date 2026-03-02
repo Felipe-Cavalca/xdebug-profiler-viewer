@@ -8,7 +8,22 @@
     "vscode": "^1.109.0"
   },
   "categories": [
+    "Visualization",
     "Other"
+  ],
+  "keywords": [
+    "xdebug",
+    "profiler",
+    "profile",
+    "profiling",
+    "cachegrind",
+    "performance",
+    "php",
+    "call graph",
+    "flame graph",
+    "hotspot",
+    "cpu",
+    "debugging"
   ],
   "activationEvents": [
     "onCustomEditor:xdebugProfileViewer.viewer",

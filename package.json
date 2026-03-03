@@ -91,6 +91,41 @@
           "default": 3,
           "minimum": 0,
           "description": "Maximum retry attempts for indexing a newly created/updated profiler file."
+        },
+        "xdebugProfileViewer.lineTimings.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable line timing inlay hints for PHP files based on indexed Xdebug trace files."
+        },
+        "xdebugProfileViewer.lineTimings.minDurationMs": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Minimum total line duration (ms) required to show a line timing hint."
+        },
+        "xdebugProfileViewer.lineTimings.showLoopsAsAggregate": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, repeated execution of the same line is shown as total/count/avg."
+        },
+        "xdebugProfileViewer.lineTimings.maxHintsPerFile": {
+          "type": "number",
+          "default": 200,
+          "minimum": 1,
+          "description": "Maximum number of line timing hints shown per file."
+        },
+        "xdebugProfileViewer.lineTimings.traceGlobs": {
+          "type": "array",
+          "default": [
+            "**/trace*.xt",
+            "**/xdebug-trace*.xt",
+            "**/*.trace",
+            "**/*.xt"
+          ],
+          "description": "Glob patterns used to discover Xdebug TRACE files for line timings.",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }

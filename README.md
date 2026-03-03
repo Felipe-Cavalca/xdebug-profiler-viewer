@@ -1,4 +1,4 @@
-# Xdebug Profile Viewer
+﻿# Xdebug Profile Viewer
 
 Turn Xdebug/Cachegrind profile files into actionable insights inside VS Code.
 
@@ -19,6 +19,7 @@ Turn Xdebug/Cachegrind profile files into actionable insights inside VS Code.
   - fan-in, fan-out, risk, and optimization potential
 - `Open source` action to jump to file and line.
 - CodeLens in PHP files with `Breakage risk: X%` per function.
+- Line timings in PHP via Xdebug TRACE (inlay hints per call-site line).
 - Localized UI:
   - Portuguese when VS Code language starts with `pt`
   - English otherwise
@@ -51,6 +52,16 @@ Turn Xdebug/Cachegrind profile files into actionable insights inside VS Code.
   - Defines retry delay when a profile file is still incomplete.
 - `xdebugProfileViewer.codeLens.profilerIndexMaxRetries`
   - Defines the maximum number of indexing retries.
+- `xdebugProfileViewer.lineTimings.enabled`
+  - Enables/disables line timing inlay hints.
+- `xdebugProfileViewer.lineTimings.minDurationMs`
+  - Shows hints only for lines above this total duration.
+- `xdebugProfileViewer.lineTimings.showLoopsAsAggregate`
+  - Shows looped lines as `total/count/avg`.
+- `xdebugProfileViewer.lineTimings.maxHintsPerFile`
+  - Limits the number of hints per file.
+- `xdebugProfileViewer.lineTimings.traceGlobs`
+  - Glob patterns used to find TRACE files in the workspace.
 
 `pathMappings` example:
 
@@ -71,6 +82,49 @@ When you use `Open source`, the extension tries:
 3. workspace suffix fallback search
 
 This makes profiles generated in local, remote, or container environments usable in your workspace.
+
+## Line Timings (Trace)
+
+`Line Timings` uses Xdebug TRACE files to annotate PHP call-site lines directly in the editor:
+
+- Single execution line: `⏱ 3.4ms`
+- Loop/repeated line: `⏱ total 183.2ms • 120x • avg 1.53ms`
+
+Meaning of `x`:
+
+- `x` is the number of traced function calls attributed to that line in the selected trace.
+- It is not the number of function declarations.
+
+Interaction:
+
+- Hover on the hint shows a compact summary:
+  - total line time
+  - total memory delta
+  - call count attributed to the line
+  - trace timestamp
+- Click on the hint opens a dedicated details view (Webview), with:
+  - line totals (`time`, `memory`, `count`)
+  - functions executed from that line (X, Y, Z with total/count/avg)
+  - top individual slow calls
+
+### Generating trace files (Xdebug)
+
+Example `php.ini` settings:
+
+```ini
+xdebug.mode=trace
+xdebug.start_with_request=yes
+xdebug.trace_output_name=trace.%c
+xdebug.output_dir=/tmp/xdebug
+; Recommended for this extension:
+xdebug.trace_format=1
+```
+
+Notes:
+
+- TRACE is more detailed (and heavier) than profiler/cachegrind. Use it mainly in development.
+- For best parsing reliability, prefer Xdebug tabular trace format (`trace_format=1`).
+- `pathMappings` is applied to TRACE paths as well, so container paths (for example `/container/app/...`) can resolve to local workspace files.
 
 ## Requirements
 

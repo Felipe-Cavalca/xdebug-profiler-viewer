@@ -62,6 +62,8 @@ Turn Xdebug/Cachegrind profile files into actionable insights inside VS Code.
   - Limits the number of hints per file.
 - `xdebugProfileViewer.lineTimings.traceGlobs`
   - Glob patterns used to find TRACE files in the workspace.
+- `xdebugProfileViewer.lineTimings.lineRemapRadius`
+  - How many lines around the original trace line to search when remapping hints after edits.
 
 `pathMappings` example:
 

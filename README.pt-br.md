@@ -63,6 +63,8 @@ O **Xdebug Profile Viewer** abre seu profiler em uma interface visual, destaca h
   - Limita a quantidade de hints por arquivo.
 - `xdebugProfileViewer.lineTimings.traceGlobs`
   - Globs usados para localizar arquivos TRACE no workspace.
+- `xdebugProfileViewer.lineTimings.lineRemapRadius`
+  - Quantas linhas ao redor da linha original do trace procurar ao remapear hints depois de edicoes.
 
 Exemplo de `pathMappings`:
 

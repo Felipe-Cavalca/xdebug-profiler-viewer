@@ -126,6 +126,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "xdebugProfileViewer.lineTimings.lineRemapRadius": {
+          "type": "number",
+          "default": 120,
+          "minimum": 0,
+          "maximum": 2000,
+          "description": "Maximum number of lines around the original trace line to search when remapping hints after edits."
         }
       }
     }

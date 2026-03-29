@@ -31,19 +31,25 @@ export class LineTimingsInlayHintsProvider implements vscode.InlayHintsProvider,
 		const minDurationUs = Math.max(0, getMinDurationMs()) * 1000;
 		const showLoopsAsAggregate = getShowLoopsAsAggregate();
 		const maxHints = Math.max(1, getMaxHintsPerFile());
-		const candidates: TraceLineStats[] = [];
-		for (const stat of latestByLine.values()) {
-			if (stat.line < 1 || stat.line > document.lineCount) {
+		const mappedStats = mapStatsToCurrentDocument(
+			Array.from(latestByLine.values()),
+			document,
+			getLineRemapRadius()
+		);
+		const candidates: Array<{ stat: TraceLineStats; displayLine: number }> = [];
+		for (const mapped of mappedStats) {
+			const stat = mapped.stat;
+			if (mapped.displayLine < 1 || mapped.displayLine > document.lineCount) {
 				continue;
 			}
 			if (stat.totalDurationUs <= 0 || stat.totalDurationUs < minDurationUs) {
 				continue;
 			}
-			const zeroBased = stat.line - 1;
+			const zeroBased = mapped.displayLine - 1;
 			if (zeroBased < range.start.line || zeroBased > range.end.line) {
 				continue;
 			}
-			candidates.push(stat);
+			candidates.push(mapped);
 		}
 		if (candidates.length === 0) {
 			return [];
@@ -53,12 +59,12 @@ export class LineTimingsInlayHintsProvider implements vscode.InlayHintsProvider,
 			? candidates
 			: candidates
 				.slice()
-				.sort((a, b) => b.totalDurationUs - a.totalDurationUs)
+				.sort((a, b) => b.stat.totalDurationUs - a.stat.totalDurationUs)
 				.slice(0, maxHints);
-		selected.sort((a, b) => a.line - b.line);
+		selected.sort((a, b) => a.displayLine - b.displayLine);
 
-		return selected.map((stat) => {
-			const lineText = document.lineAt(stat.line - 1);
+		return selected.map(({ stat, displayLine }) => {
+			const lineText = document.lineAt(displayLine - 1);
 			const position = lineText.range.end;
 			const label = buildHintLabel(stat, showLoopsAsAggregate);
 			const labelPart = new vscode.InlayHintLabelPart(label);
@@ -234,6 +240,126 @@ function escapeHtml(value: string): string {
 		.replace(/'/g, '&#39;');
 }
 
+function mapStatsToCurrentDocument(
+	stats: TraceLineStats[],
+	document: vscode.TextDocument,
+	lineRemapRadius: number
+): Array<{ stat: TraceLineStats; displayLine: number }> {
+	const out: Array<{ stat: TraceLineStats; displayLine: number }> = [];
+	const usedLines = new Set<number>();
+	for (const stat of stats) {
+		const mapped = findBestCurrentLineForStat(stat, document, usedLines, lineRemapRadius) ?? stat.line;
+		usedLines.add(mapped);
+		out.push({ stat, displayLine: mapped });
+	}
+	return out;
+}
+
+function findBestCurrentLineForStat(
+	stat: TraceLineStats,
+	document: vscode.TextDocument,
+	usedLines: Set<number>,
+	lineRemapRadius: number
+): number | undefined {
+	const tokens = buildSearchTokens(stat);
+	if (tokens.length === 0) {
+		return undefined;
+	}
+
+	const expected = stat.line;
+	if (expected >= 1 && expected <= document.lineCount) {
+		const expectedText = normalizeLineText(document.lineAt(expected - 1).text);
+		if (containsAnyToken(expectedText, tokens) && !usedLines.has(expected)) {
+			return expected;
+		}
+	}
+
+	const near = findMatchingLine(document, tokens, expected, lineRemapRadius, usedLines);
+	if (near !== undefined) {
+		return near;
+	}
+
+	return findMatchingLine(document, tokens, expected, document.lineCount, usedLines);
+}
+
+function buildSearchTokens(stat: TraceLineStats): string[] {
+	const raw: string[] = [];
+	for (const fn of stat.functionStats.slice(0, 4)) {
+		raw.push(fn.functionName);
+	}
+	for (const ev of stat.topSlowEvents.slice(0, 4)) {
+		raw.push(ev.functionName);
+	}
+	const tokens = new Set<string>();
+	for (const item of raw) {
+		for (const part of item.split(/::|->|\\|\{|\}|:|\/|\(|\)|\./g)) {
+			const token = part.trim().toLowerCase();
+			if (token.length < 3) {
+				continue;
+			}
+			if (token === 'closure' || token === 'class' || token === 'function') {
+				continue;
+			}
+			tokens.add(token);
+		}
+	}
+	return Array.from(tokens).slice(0, 8);
+}
+
+function findMatchingLine(
+	document: vscode.TextDocument,
+	tokens: string[],
+	expectedLine: number,
+	radius: number,
+	usedLines: Set<number>
+): number | undefined {
+	const start = Math.max(1, expectedLine - radius);
+	const end = Math.min(document.lineCount, expectedLine + radius);
+	let bestLine: number | undefined;
+	let bestScore = -1;
+	let bestDistance = Number.MAX_SAFE_INTEGER;
+	for (let line = start; line <= end; line += 1) {
+		if (usedLines.has(line)) {
+			continue;
+		}
+		const text = normalizeLineText(document.lineAt(line - 1).text);
+		const score = scoreLine(text, tokens);
+		if (score <= 0) {
+			continue;
+		}
+		const distance = Math.abs(line - expectedLine);
+		if (score > bestScore || (score === bestScore && distance < bestDistance)) {
+			bestScore = score;
+			bestDistance = distance;
+			bestLine = line;
+		}
+	}
+	return bestLine;
+}
+
+function scoreLine(text: string, tokens: string[]): number {
+	let score = 0;
+	for (const token of tokens) {
+		if (text.includes(token)) {
+			score += token.length;
+		}
+	}
+	return score;
+}
+
+function containsAnyToken(text: string, tokens: string[]): boolean {
+	for (const token of tokens) {
+		if (text.includes(token)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function normalizeLineText(text: string): string {
+	return text.toLowerCase();
+}
+
 function isLineTimingsEnabled(): boolean {
 	return vscode.workspace.getConfiguration('xdebugProfileViewer').get<boolean>('lineTimings.enabled', true);
 }
@@ -248,4 +374,12 @@ function getShowLoopsAsAggregate(): boolean {
 
 function getMaxHintsPerFile(): number {
 	return vscode.workspace.getConfiguration('xdebugProfileViewer').get<number>('lineTimings.maxHintsPerFile', 200);
+}
+
+function getLineRemapRadius(): number {
+	const raw = vscode.workspace.getConfiguration('xdebugProfileViewer').get<number>('lineTimings.lineRemapRadius', 120);
+	if (!Number.isFinite(raw)) {
+		return 120;
+	}
+	return Math.max(0, Math.min(2000, Math.round(raw)));
 }

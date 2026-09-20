@@ -1,9 +1,9 @@
 ---
 name: Enhancement Request
 about: Request a new feature or improvement
-title: "Enhancement: "
+title: 'Enhancement: '
 labels: enhancement
-assignees: ""
+assignees: ''
 ---
 
 ## Description

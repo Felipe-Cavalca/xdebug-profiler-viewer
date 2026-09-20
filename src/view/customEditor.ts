@@ -1,177 +1,138 @@
-import * as path from "node:path";
-import * as vscode from "vscode";
-import {
-  CachegrindFunction,
-  CachegrindProfile,
-  parseCachegrind,
-} from "../cachegrind/parser";
-import { SourceResolver } from "../source/sourceResolver";
-import { getUiStrings } from "./i18n";
-import {
-  escapeHtmlAttr,
-  headerWithInfo,
-  iconFunction,
-  iconGraph,
-  iconOpen,
-  iconSearch,
-  sortableHeader,
-} from "./templateHelpers";
+import * as path from 'node:path';
+import * as vscode from 'vscode';
+import { CachegrindFunction, CachegrindProfile, parseCachegrind } from '../cachegrind/parser';
+import { SourceResolver } from '../source/sourceResolver';
+import { getUiStrings } from './i18n';
+import { escapeHtmlAttr, headerWithInfo, iconFunction, iconGraph, iconOpen, iconSearch, sortableHeader } from './templateHelpers';
 
-export const XDEBUG_PROFILE_VIEW_TYPE = "xdebugProfileViewer.viewer";
+export const XDEBUG_PROFILE_VIEW_TYPE = 'xdebugProfileViewer.viewer';
 
 interface XdebugProfileDocument extends vscode.CustomDocument {
-  readonly uri: vscode.Uri;
+	readonly uri: vscode.Uri;
 }
 
 interface OpenSourceMessage {
-  type: "openSource";
-  file?: string;
-  line?: number;
+	type: 'openSource';
+	file?: string;
+	line?: number;
 }
 
 export class XdebugProfileReadonlyEditorProvider
-  implements vscode.CustomReadonlyEditorProvider<XdebugProfileDocument>
-{
-  private readonly sourceResolver = new SourceResolver();
+	implements vscode.CustomReadonlyEditorProvider<XdebugProfileDocument> {
+	private readonly sourceResolver = new SourceResolver();
 
-  public static register(context: vscode.ExtensionContext): vscode.Disposable {
-    const provider = new XdebugProfileReadonlyEditorProvider(context);
-    return vscode.window.registerCustomEditorProvider(
-      XDEBUG_PROFILE_VIEW_TYPE,
-      provider,
-      {
-        supportsMultipleEditorsPerDocument: true,
-      },
-    );
-  }
+	public static register(context: vscode.ExtensionContext): vscode.Disposable {
+		const provider = new XdebugProfileReadonlyEditorProvider(context);
+		return vscode.window.registerCustomEditorProvider(XDEBUG_PROFILE_VIEW_TYPE, provider, {
+			supportsMultipleEditorsPerDocument: true
+		});
+	}
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+	constructor(private readonly context: vscode.ExtensionContext) {}
 
-  async openCustomDocument(uri: vscode.Uri): Promise<XdebugProfileDocument> {
-    return { uri, dispose: () => undefined };
-  }
+	async openCustomDocument(uri: vscode.Uri): Promise<XdebugProfileDocument> {
+		return { uri, dispose: () => undefined };
+	}
 
-  async resolveCustomEditor(
-    document: XdebugProfileDocument,
-    webviewPanel: vscode.WebviewPanel,
-  ): Promise<void> {
-    webviewPanel.title = `Xdebug Profile Viewer: ${path.basename(document.uri.fsPath)}`;
-    webviewPanel.webview.options = {
-      enableScripts: true,
-      localResourceRoots: [this.context.extensionUri],
-    };
+	async resolveCustomEditor(
+		document: XdebugProfileDocument,
+		webviewPanel: vscode.WebviewPanel
+	): Promise<void> {
+		webviewPanel.title = `Xdebug Profile Viewer: ${path.basename(document.uri.fsPath)}`;
+		webviewPanel.webview.options = {
+			enableScripts: true,
+			localResourceRoots: [this.context.extensionUri]
+		};
 
-    const profile = await this.readProfile(document.uri);
-    webviewPanel.webview.html = this.getHtml(
-      webviewPanel.webview,
-      profile,
-      document.uri,
-    );
+		const profile = await this.readProfile(document.uri);
+		webviewPanel.webview.html = this.getHtml(webviewPanel.webview, profile, document.uri);
 
-    webviewPanel.webview.onDidReceiveMessage(
-      async (message: OpenSourceMessage) => {
-        if (message.type !== "openSource" || !message.file) {
-          return;
-        }
-        await this.openSourceLocation(message.file, message.line, document.uri);
-      },
-    );
-  }
+		webviewPanel.webview.onDidReceiveMessage(async (message: OpenSourceMessage) => {
+			if (message.type !== 'openSource' || !message.file) {
+				return;
+			}
+			await this.openSourceLocation(message.file, message.line, document.uri);
+		});
+	}
 
-  private async readProfile(uri: vscode.Uri): Promise<CachegrindProfile> {
-    try {
-      const bytes = await vscode.workspace.fs.readFile(uri);
-      const text = new TextDecoder("utf-8").decode(bytes);
-      return parseCachegrind(text);
-    } catch (error) {
-      const errText = error instanceof Error ? error.message : String(error);
-      return {
-        events: ["cost"],
-        primaryEvent: "cost",
-        eventScaleNs: {},
-        summaryByEvent: {},
-        metadata: {},
-        totalSelf: 0,
-        sumInclusive: 0,
-        totalCalls: 0,
-        maxFanIn: 0,
-        maxFanOut: 0,
-        maxDegree: 0,
-        functions: [
-          {
-            id: "error",
-            name: `Unable to parse file: ${errText}`,
-            inclusive: 0,
-            self: 0,
-            callsObserved: 0,
-            callsEffective: 0,
-            callers: [],
-            callees: [],
-            eventCosts: {
-              cost: { inclusive: 0, self: 0 },
-            },
-          },
-        ],
-      };
-    }
-  }
+	private async readProfile(uri: vscode.Uri): Promise<CachegrindProfile> {
+		try {
+			const bytes = await vscode.workspace.fs.readFile(uri);
+			const text = new TextDecoder('utf-8').decode(bytes);
+			return parseCachegrind(text);
+		} catch (error) {
+			const errText = error instanceof Error ? error.message : String(error);
+			return {
+				events: ['cost'],
+				primaryEvent: 'cost',
+				eventScaleNs: {},
+				summaryByEvent: {},
+				metadata: {},
+				totalSelf: 0,
+				sumInclusive: 0,
+				totalCalls: 0,
+				maxFanIn: 0,
+				maxFanOut: 0,
+				maxDegree: 0,
+				functions: [
+					{
+						id: 'error',
+						name: `Unable to parse file: ${errText}`,
+						inclusive: 0,
+						self: 0,
+						callsObserved: 0,
+						callsEffective: 0,
+						callers: [],
+						callees: [],
+						eventCosts: {
+							cost: { inclusive: 0, self: 0 }
+						}
+					}
+				]
+			};
+		}
+	}
 
-  private async openSourceLocation(
-    filePath: string,
-    line: number | undefined,
-    from: vscode.Uri,
-  ): Promise<void> {
-    const targetUri = await this.sourceResolver.resolveSourceUri(
-      filePath,
-      from,
-    );
-    if (!targetUri) {
-      const ui = getUiStrings(vscode.env.language);
-      void vscode.window.showWarningMessage(
-        `${ui.source}: ${filePath} (${ui.unknown}). Configure xdebugProfileViewer.pathMappings.`,
-      );
-      return;
-    }
+	private async openSourceLocation(filePath: string, line: number | undefined, from: vscode.Uri): Promise<void> {
+		const targetUri = await this.sourceResolver.resolveSourceUri(filePath, from);
+		if (!targetUri) {
+			const ui = getUiStrings(vscode.env.language);
+			void vscode.window.showWarningMessage(
+				`${ui.source}: ${filePath} (${ui.unknown}). Configure xdebugProfileViewer.pathMappings.`
+			);
+			return;
+		}
 
-    const doc = await vscode.workspace.openTextDocument(targetUri);
-    const editor = await vscode.window.showTextDocument(doc, {
-      preview: false,
-    });
-    if (line && line > 0) {
-      const position = new vscode.Position(line - 1, 0);
-      editor.selection = new vscode.Selection(position, position);
-      editor.revealRange(
-        new vscode.Range(position, position),
-        vscode.TextEditorRevealType.InCenter,
-      );
-    }
-  }
+		const doc = await vscode.workspace.openTextDocument(targetUri);
+		const editor = await vscode.window.showTextDocument(doc, { preview: false });
+		if (line && line > 0) {
+			const position = new vscode.Position(line - 1, 0);
+			editor.selection = new vscode.Selection(position, position);
+			editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
+		}
+	}
 
-  private getHtml(
-    webview: vscode.Webview,
-    profile: CachegrindProfile,
-    uri: vscode.Uri,
-  ): string {
-    const nonce = createNonce();
-    const ui = getUiStrings(vscode.env.language);
-    const state = JSON.stringify({
-      documentName: path.basename(uri.fsPath),
-      documentPath: uri.fsPath,
-      ui,
-      profile: {
-        ...profile,
-        functions: profile.functions.map((fn) => normalizeFunction(fn)),
-      },
-    }).replace(/</g, "\\u003c");
+	private getHtml(webview: vscode.Webview, profile: CachegrindProfile, uri: vscode.Uri): string {
+		const nonce = createNonce();
+		const ui = getUiStrings(vscode.env.language);
+		const state = JSON.stringify({
+			documentName: path.basename(uri.fsPath),
+			documentPath: uri.fsPath,
+			ui,
+			profile: {
+				...profile,
+				functions: profile.functions.map((fn) => normalizeFunction(fn))
+			}
+		}).replace(/</g, '\\u003c');
 
-    const csp = [
-      "default-src 'none'",
-      `style-src ${webview.cspSource} 'nonce-${nonce}'`,
-      `script-src 'nonce-${nonce}'`,
-      "img-src data:",
-    ].join("; ");
+		const csp = [
+			"default-src 'none'",
+			`style-src ${webview.cspSource} 'nonce-${nonce}'`,
+			`script-src 'nonce-${nonce}'`,
+			'img-src data:'
+		].join('; ');
 
-    return `<!DOCTYPE html>
+		return `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8" />
@@ -683,7 +644,7 @@ export class XdebugProfileReadonlyEditorProvider
 				<table>
 					<thead>
 						<tr>
-							<th data-sort="rank">${sortableHeader("#")}</th>
+							<th data-sort="rank">${sortableHeader('#')}</th>
 							<th data-sort="function">${sortableHeader(ui.function)}</th>
 							<th data-sort="criticality">${sortableHeader(ui.criticality, ui.tipCriticality)}</th>
 							<th data-sort="cpuSelf">${sortableHeader(ui.cpuSelf, ui.tipCpuSelf)}</th>
@@ -1754,32 +1715,26 @@ export class XdebugProfileReadonlyEditorProvider
 	</script>
 </body>
 </html>`;
-  }
+	}
 }
 
 function createNonce(): string {
-  const alphabet =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let nonce = "";
-  for (let i = 0; i < 32; i += 1) {
-    nonce += alphabet[Math.floor(Math.random() * alphabet.length)];
-  }
-  return nonce;
+	const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+	let nonce = '';
+	for (let i = 0; i < 32; i += 1) {
+		nonce += alphabet[Math.floor(Math.random() * alphabet.length)];
+	}
+	return nonce;
 }
 
 function normalizeFunction(fn: CachegrindFunction): CachegrindFunction {
-  return {
-    ...fn,
-    callsObserved: Number(fn.callsObserved || 0),
-    callsEffective: Number(fn.callsEffective || fn.callsObserved || 0),
-    callers: (fn.callers ?? []).map((edge) => ({
-      ...edge,
-      eventCosts: edge.eventCosts ?? {},
-    })),
-    callees: (fn.callees ?? []).map((edge) => ({
-      ...edge,
-      eventCosts: edge.eventCosts ?? {},
-    })),
-    eventCosts: fn.eventCosts ?? {},
-  };
+	return {
+		...fn,
+		callsObserved: Number(fn.callsObserved || 0),
+		callsEffective: Number(fn.callsEffective || fn.callsObserved || 0),
+		callers: (fn.callers ?? []).map((edge) => ({ ...edge, eventCosts: edge.eventCosts ?? {} })),
+		callees: (fn.callees ?? []).map((edge) => ({ ...edge, eventCosts: edge.eventCosts ?? {} })),
+		eventCosts: fn.eventCosts ?? {}
+	};
 }
+

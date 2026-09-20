@@ -5,6 +5,7 @@ on:
     types: [closed]
 
 jobs:
+
   sync_labels:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'

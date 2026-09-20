@@ -28,7 +28,6 @@ Yes, this can happen and is expected.
 - Aggregated `inclusive` (or one function's inclusive in recursive/overlapping paths) can be larger than `totalSelf`.
 
 So:
-
 - compare `%Self` against `totalSelf`.
 - use `inclusive` for delegation/flow analysis, not as a unique global total.
 
@@ -122,7 +121,6 @@ Used as optimization opportunity indicator:
 - clamped to `[0,100]`
 
 Interpretation:
-
 - Higher means larger expected gain by improving this function directly.
 
 ### Churn Risk
@@ -137,7 +135,6 @@ Used as refactor blast-radius indicator:
 - clamped to `[0,100]`
 
 Interpretation:
-
 - Higher means higher change impact risk.
 
 ## 8. Efficiency Metrics

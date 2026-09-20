@@ -60,8 +60,8 @@ class SourceResolver {
         return this.findBySuffix(filePath);
     }
     getPathMappings() {
-        const cfg = vscode.workspace.getConfiguration('xdebugProfileViewer');
-        const mappings = cfg.get('pathMappings', {});
+        const cfg = vscode.workspace.getConfiguration("xdebugProfileViewer");
+        const mappings = cfg.get("pathMappings", {});
         return mappings ?? {};
     }
     applyPathMappings(filePath, mappings) {
@@ -77,7 +77,7 @@ class SourceResolver {
             if (!sourceNorm.startsWith(fromPrefix)) {
                 continue;
             }
-            const rest = sourceNorm.slice(fromPrefix.length).replace(/^\/+/, '');
+            const rest = sourceNorm.slice(fromPrefix.length).replace(/^\/+/, "");
             out.push(path.normalize(path.join(toPrefix, rest)));
         }
         return out;
@@ -100,16 +100,16 @@ class SourceResolver {
         if (folders.length === 0) {
             return undefined;
         }
-        const parts = normalizeSlashes(filePath).split('/').filter(Boolean);
+        const parts = normalizeSlashes(filePath).split("/").filter(Boolean);
         if (parts.length === 0) {
             return undefined;
         }
         const maxParts = Math.min(parts.length, 6);
         for (let partCount = maxParts; partCount >= 1; partCount -= 1) {
-            const suffix = parts.slice(parts.length - partCount).join('/');
+            const suffix = parts.slice(parts.length - partCount).join("/");
             for (const folder of folders) {
                 const pattern = new vscode.RelativePattern(folder, `**/${suffix}`);
-                const matches = await vscode.workspace.findFiles(pattern, '**/node_modules/**', 2);
+                const matches = await vscode.workspace.findFiles(pattern, "**/node_modules/**", 2);
                 if (matches.length > 0) {
                     return matches[0];
                 }
@@ -120,9 +120,9 @@ class SourceResolver {
 }
 exports.SourceResolver = SourceResolver;
 function normalizeSlashes(value) {
-    return value.replace(/\\/g, '/');
+    return value.replace(/\\/g, "/");
 }
 function trimTrailingSlash(value) {
-    return value.replace(/[\\/]+$/, '');
+    return value.replace(/[\\/]+$/, "");
 }
 //# sourceMappingURL=sourceResolver.js.map

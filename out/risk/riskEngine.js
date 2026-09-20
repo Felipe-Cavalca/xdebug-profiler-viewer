@@ -24,7 +24,7 @@ class RiskEngine {
             ? getEventInclusive(fn, timeEvent) / callsEffective
             : undefined;
         return {
-            status: 'known',
+            status: "known",
             percent: churnRisk,
             details: `fanIn=${fanIn}, fanOut=${fanOut}, inbound=${Math.round(inboundCost)}`,
             metrics: {
@@ -38,8 +38,8 @@ class RiskEngine {
                 timeAvgPerCall,
                 cpuEvent,
                 memEvent,
-                timeEvent
-            }
+                timeEvent,
+            },
         };
     }
     getGraphCache(profile) {
@@ -88,20 +88,22 @@ function computeChurnRisk(fanIn, fanOut, maxFanIn, maxDegree, inboundCost, maxIn
     const fanInNorm = maxFanIn > 0 ? fanIn / maxFanIn : 0;
     const degreeNorm = maxDegree > 0 ? (fanIn + fanOut) / maxDegree : 0;
     const inboundNorm = maxInboundCost > 0 ? inboundCost / maxInboundCost : degreeNorm;
-    const score = 100 * ((0.45 * fanInNorm) + (0.25 * degreeNorm) + (0.3 * inboundNorm));
+    const score = 100 * (0.45 * fanInNorm + 0.25 * degreeNorm + 0.3 * inboundNorm);
     return clampPct(score);
 }
 function clampPct(value) {
     return Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
 }
 function pickCpuEvent(events) {
-    return events.find((eventName) => /cpu|time|wall|duration|ns|us|ms|sec/i.test(eventName) && !/mem|byte/i.test(eventName));
+    return events.find((eventName) => /cpu|time|wall|duration|ns|us|ms|sec/i.test(eventName) &&
+        !/mem|byte/i.test(eventName));
 }
 function pickMemoryEvent(events) {
     return events.find((eventName) => /mem|byte/i.test(eventName));
 }
 function pickTimeEvent(events, primaryEvent) {
-    if (/time|ns|us|ms|sec|wall|duration/i.test(primaryEvent) && !/mem|byte/i.test(primaryEvent)) {
+    if (/time|ns|us|ms|sec|wall|duration/i.test(primaryEvent) &&
+        !/mem|byte/i.test(primaryEvent)) {
         return primaryEvent;
     }
     return pickCpuEvent(events);

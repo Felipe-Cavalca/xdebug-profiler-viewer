@@ -38,9 +38,9 @@ const assert = __importStar(require("assert"));
 // as well as import your extension to test it
 const vscode = __importStar(require("vscode"));
 // import * as myExtension from '../../extension';
-suite('Extension Test Suite', () => {
-    vscode.window.showInformationMessage('Start all tests.');
-    test('Sample test', () => {
+suite("Extension Test Suite", () => {
+    vscode.window.showInformationMessage("Start all tests.");
+    test("Sample test", () => {
         assert.strictEqual(-1, [1, 2, 3].indexOf(5));
         assert.strictEqual(-1, [1, 2, 3].indexOf(0));
     });

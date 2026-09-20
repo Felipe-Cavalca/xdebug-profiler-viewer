@@ -46,9 +46,9 @@ class RiskService {
         const match = this.profilerIndex.getLatestProfileForFunction(fn.name, document.uri, fn.line + 1);
         if (!match) {
             return {
-                status: 'unknown',
-                title: 'Risco de quebra: N/A • sem dados',
-                tooltip: 'Função não encontrada em nenhum profiler indexado.'
+                status: "unknown",
+                title: "Risco de quebra: N/A • sem dados",
+                tooltip: "Função não encontrada em nenhum profiler indexado.",
             };
         }
         const result = this.riskEngine.computeBreakageRisk(match.profile, match.functionData);
@@ -57,33 +57,36 @@ class RiskService {
 }
 exports.RiskService = RiskService;
 function formatDisplay(result, profileUri, profileMtime) {
-    if (result.status !== 'known' || result.percent === undefined) {
+    if (result.status !== "known" || result.percent === undefined) {
         return {
-            status: 'unknown',
-            title: '$(question) Risco de quebra: sem dados',
-            tooltip: result.details ?? 'Sem dados suficientes para calcular.'
+            status: "unknown",
+            title: "$(question) Risco de quebra: sem dados",
+            tooltip: result.details ?? "Sem dados suficientes para calcular.",
         };
     }
     const metrics = result.metrics;
-    const calls = metrics ? Math.max(metrics.callsObserved, metrics.callsEffective) : 0;
-    const callsLabel = calls === 1 ? '1 chamada' : `${calls} chamadas`;
+    const calls = metrics
+        ? Math.max(metrics.callsObserved, metrics.callsEffective)
+        : 0;
+    const callsLabel = calls === 1 ? "1 chamada" : `${calls} chamadas`;
     const title = `$(shield) | ${getRiskLabel(result.percent)}: ${Math.round(result.percent)}%`;
     const parts = [`$(pulse) ${callsLabel}`];
     if (metrics?.timeAvgPerCall !== undefined) {
         parts.push(`$(clock) ${formatMetric(metrics.timeAvgPerCall, metrics.timeEvent)}/ch`);
     }
-    if (metrics?.cpuAvgPerCall !== undefined && metrics?.timeAvgPerCall === undefined) {
+    if (metrics?.cpuAvgPerCall !== undefined &&
+        metrics?.timeAvgPerCall === undefined) {
         parts.push(`$(dashboard) ${formatMetric(metrics.cpuAvgPerCall, metrics.cpuEvent)}/ch`);
     }
     if (metrics?.memAvgPerCall !== undefined) {
         parts.push(`$(database) ${formatMetric(metrics.memAvgPerCall, metrics.memEvent)}/ch`);
     }
-    const subtitle = parts.join(' | ');
+    const subtitle = parts.join(" | ");
     const lines = [
         `Risco de quebra: ${result.percent.toFixed(1)}%`,
         `Nivel: ${getRiskLabel(result.percent)}`,
         `Chamadas: observadas=${metrics?.callsObserved ?? 0}, efetivas=${metrics?.callsEffective ?? 0}`,
-        `Acoplamento: fan-in=${metrics?.fanIn ?? 0}, fan-out=${metrics?.fanOut ?? 0}, inbound=${formatInt(metrics?.inboundCost ?? 0)}`
+        `Acoplamento: fan-in=${metrics?.fanIn ?? 0}, fan-out=${metrics?.fanOut ?? 0}, inbound=${formatInt(metrics?.inboundCost ?? 0)}`,
     ];
     if (metrics?.cpuAvgPerCall !== undefined) {
         lines.push(`CPU media por chamada: ${formatMetric(metrics.cpuAvgPerCall, metrics.cpuEvent)} (${metrics.cpuEvent})`);
@@ -95,13 +98,13 @@ function formatDisplay(result, profileUri, profileMtime) {
         lines.push(`Tempo medio por chamada: ${formatMetric(metrics.timeAvgPerCall, metrics.timeEvent)} (${metrics.timeEvent})`);
     }
     lines.push(`Profiler usado: ${path.basename(profileUri.fsPath)}`);
-    lines.push(`Ultima aparicao da funcao: ${new Date(profileMtime).toLocaleString('pt-BR')}`);
+    lines.push(`Ultima aparicao da funcao: ${new Date(profileMtime).toLocaleString("pt-BR")}`);
     return {
-        status: 'known',
+        status: "known",
         title,
         subtitle,
-        tooltip: lines.join('\n'),
-        profileUri
+        tooltip: lines.join("\n"),
+        profileUri,
     };
 }
 function formatMetric(value, eventName) {
@@ -135,10 +138,10 @@ function formatTime(value, eventName) {
     return `${totalNs.toFixed(0)} ns`;
 }
 function getTimeScaleNs(eventName) {
-    const text = String(eventName || '').toLowerCase();
+    const text = String(eventName || "").toLowerCase();
     const inline = text.match(/(\d+(?:[.,]\d+)?)\s*(ns|us|ms|s|nsec|usec|msec|sec)\b/i);
     if (inline) {
-        const amount = Number(inline[1].replace(',', '.'));
+        const amount = Number(inline[1].replace(",", "."));
         return amount * unitToNs(inline[2].toLowerCase());
     }
     if (/\bns\b/i.test(text)) {
@@ -157,17 +160,17 @@ function getTimeScaleNs(eventName) {
 }
 function unitToNs(unit) {
     switch (unit) {
-        case 'ns':
-        case 'nsec':
+        case "ns":
+        case "nsec":
             return 1;
-        case 'us':
-        case 'usec':
+        case "us":
+        case "usec":
             return 1e3;
-        case 'ms':
-        case 'msec':
+        case "ms":
+        case "msec":
             return 1e6;
-        case 's':
-        case 'sec':
+        case "s":
+        case "sec":
             return 1e9;
         default:
             return 1;
@@ -187,18 +190,18 @@ function formatBytes(value) {
     return `${formatInt(value)} B`;
 }
 function formatInt(value) {
-    return new Intl.NumberFormat('pt-BR').format(Math.round(value));
+    return new Intl.NumberFormat("pt-BR").format(Math.round(value));
 }
 function getRiskLabel(percent) {
     if (percent >= 75) {
-        return 'Risco muito alto';
+        return "Risco muito alto";
     }
     if (percent >= 50) {
-        return 'Risco alto';
+        return "Risco alto";
     }
     if (percent >= 25) {
-        return 'Risco moderado';
+        return "Risco moderado";
     }
-    return 'Risco baixo';
+    return "Risco baixo";
 }
 //# sourceMappingURL=riskService.js.map

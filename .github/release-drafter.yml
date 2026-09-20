@@ -1,44 +1,43 @@
-change-template: '* $TITLE por @$AUTHOR in (#$NUMBER)'
-no-changes-template: '* Sem alterações '
+change-template: "* $TITLE por @$AUTHOR in (#$NUMBER)"
+no-changes-template: "* Sem alterações "
 include-pre-releases: false
 sort-direction: ascending
 categories:
-
-  - title: 'Depreciado'
+  - title: "Depreciado"
     collapse-after: 5
     labels:
-      - 'deprecated'
+      - "deprecated"
 
-  - title: 'Melhorias'
+  - title: "Melhorias"
     collapse-after: 3
     labels:
-      - 'enhancement'
+      - "enhancement"
 
-  - title: 'Documentação'
+  - title: "Documentação"
     collapse-after: 3
     labels:
-      - 'documentation'
+      - "documentation"
 
-  - title: 'Correções de bugs'
+  - title: "Correções de bugs"
     collapse-after: 3
     labels:
-      - 'bug'
+      - "bug"
 
-  - title: 'Atualizando dependencias'
+  - title: "Atualizando dependencias"
     collapse-after: 3
     labels:
-      - 'dependencies'
+      - "dependencies"
 
-  - title: 'Refatoração de código'
+  - title: "Refatoração de código"
     collapse-after: 3
     labels:
-      - 'refactoring'
-      - 'refactor'
+      - "refactoring"
+      - "refactor"
 
-  - title: 'Testes'
+  - title: "Testes"
     collapse-after: 4
     labels:
-      - 'tests'
+      - "tests"
 
 template: |
   ## O que mudou des da $PREVIOUS_TAG

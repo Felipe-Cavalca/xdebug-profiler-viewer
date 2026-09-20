@@ -58,45 +58,37 @@ async function activate(context) {
     context.subscriptions.push(vscode.commands.registerCommand(lineTimingsInlayHintsProvider_1.SHOW_LINE_TIMING_DETAILS_COMMAND, async (uri, line) => {
         await (0, lineTimingsInlayHintsProvider_1.showLineTimingDetailsCommand)(traceIndex, uri, line);
     }));
-    context.subscriptions.push(vscode.languages.registerCodeLensProvider([
-        { language: 'php' },
-        { language: 'php8' },
-        { language: 'phtml' }
-    ], riskCodeLensProvider));
-    context.subscriptions.push(vscode.languages.registerInlayHintsProvider([
-        { language: 'php' },
-        { language: 'php8' },
-        { language: 'phtml' }
-    ], lineTimingsProvider));
+    context.subscriptions.push(vscode.languages.registerCodeLensProvider([{ language: "php" }, { language: "php8" }, { language: "phtml" }], riskCodeLensProvider));
+    context.subscriptions.push(vscode.languages.registerInlayHintsProvider([{ language: "php" }, { language: "php8" }, { language: "phtml" }], lineTimingsProvider));
     context.subscriptions.push(profilerIndex.onDidChange(() => {
         riskCodeLensProvider.invalidate();
     }), traceIndex.onDidChange(() => {
         lineTimingsProvider.invalidate();
     }), vscode.workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration('xdebugProfileViewer.pathMappings') ||
-            event.affectsConfiguration('xdebugProfileViewer.codeLens.enabled') ||
-            event.affectsConfiguration('xdebugProfileViewer.codeLens.profilerIndexDebounceMs') ||
-            event.affectsConfiguration('xdebugProfileViewer.codeLens.profilerIndexRetryMs') ||
-            event.affectsConfiguration('xdebugProfileViewer.codeLens.profilerIndexMaxRetries')) {
+        if (event.affectsConfiguration("xdebugProfileViewer.pathMappings") ||
+            event.affectsConfiguration("xdebugProfileViewer.codeLens.enabled") ||
+            event.affectsConfiguration("xdebugProfileViewer.codeLens.profilerIndexDebounceMs") ||
+            event.affectsConfiguration("xdebugProfileViewer.codeLens.profilerIndexRetryMs") ||
+            event.affectsConfiguration("xdebugProfileViewer.codeLens.profilerIndexMaxRetries")) {
             void profilerIndex.rebuildAll();
             riskCodeLensProvider.invalidate();
         }
-        if (event.affectsConfiguration('xdebugProfileViewer.pathMappings') ||
-            event.affectsConfiguration('xdebugProfileViewer.lineTimings.enabled') ||
-            event.affectsConfiguration('xdebugProfileViewer.lineTimings.minDurationMs') ||
-            event.affectsConfiguration('xdebugProfileViewer.lineTimings.showLoopsAsAggregate') ||
-            event.affectsConfiguration('xdebugProfileViewer.lineTimings.maxHintsPerFile') ||
-            event.affectsConfiguration('xdebugProfileViewer.lineTimings.traceGlobs') ||
-            event.affectsConfiguration('xdebugProfileViewer.codeLens.profilerIndexDebounceMs') ||
-            event.affectsConfiguration('xdebugProfileViewer.codeLens.profilerIndexRetryMs') ||
-            event.affectsConfiguration('xdebugProfileViewer.codeLens.profilerIndexMaxRetries')) {
-            if (event.affectsConfiguration('xdebugProfileViewer.lineTimings.traceGlobs')) {
+        if (event.affectsConfiguration("xdebugProfileViewer.pathMappings") ||
+            event.affectsConfiguration("xdebugProfileViewer.lineTimings.enabled") ||
+            event.affectsConfiguration("xdebugProfileViewer.lineTimings.minDurationMs") ||
+            event.affectsConfiguration("xdebugProfileViewer.lineTimings.showLoopsAsAggregate") ||
+            event.affectsConfiguration("xdebugProfileViewer.lineTimings.maxHintsPerFile") ||
+            event.affectsConfiguration("xdebugProfileViewer.lineTimings.traceGlobs") ||
+            event.affectsConfiguration("xdebugProfileViewer.codeLens.profilerIndexDebounceMs") ||
+            event.affectsConfiguration("xdebugProfileViewer.codeLens.profilerIndexRetryMs") ||
+            event.affectsConfiguration("xdebugProfileViewer.codeLens.profilerIndexMaxRetries")) {
+            if (event.affectsConfiguration("xdebugProfileViewer.lineTimings.traceGlobs")) {
                 void traceIndex.reconfigure();
             }
-            else if (event.affectsConfiguration('xdebugProfileViewer.pathMappings') ||
-                event.affectsConfiguration('xdebugProfileViewer.codeLens.profilerIndexDebounceMs') ||
-                event.affectsConfiguration('xdebugProfileViewer.codeLens.profilerIndexRetryMs') ||
-                event.affectsConfiguration('xdebugProfileViewer.codeLens.profilerIndexMaxRetries')) {
+            else if (event.affectsConfiguration("xdebugProfileViewer.pathMappings") ||
+                event.affectsConfiguration("xdebugProfileViewer.codeLens.profilerIndexDebounceMs") ||
+                event.affectsConfiguration("xdebugProfileViewer.codeLens.profilerIndexRetryMs") ||
+                event.affectsConfiguration("xdebugProfileViewer.codeLens.profilerIndexMaxRetries")) {
                 void traceIndex.rebuildAll();
             }
             lineTimingsProvider.invalidate();

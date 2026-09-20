@@ -31,7 +31,7 @@ function parseTrace(content) {
         if (tabular) {
             tabularMatches += 1;
             parsedLines += 1;
-            if (tabular.eventType === 'enter') {
+            if (tabular.eventType === "enter") {
                 if (!tabular.functionName) {
                     continue;
                 }
@@ -42,7 +42,7 @@ function parseTrace(content) {
                     depth: tabular.depth,
                     enterTimestampUs: tabular.timestampUs,
                     enterMemoryBytes: tabular.memoryBytes,
-                    argsPreview: tabular.argsPreview
+                    argsPreview: tabular.argsPreview,
                 });
                 continue;
             }
@@ -64,7 +64,7 @@ function parseTrace(content) {
                 exitTimestampUs: tabular.timestampUs,
                 durationUs,
                 memoryDeltaBytes: computeMemoryDelta(pending.enterMemoryBytes, tabular.memoryBytes),
-                argsPreview: pending.argsPreview
+                argsPreview: pending.argsPreview,
             });
             continue;
         }
@@ -75,7 +75,7 @@ function parseTrace(content) {
         }
         humanMatches += 1;
         parsedLines += 1;
-        if (human.type === 'enter') {
+        if (human.type === "enter") {
             if (!human.functionName) {
                 continue;
             }
@@ -85,7 +85,7 @@ function parseTrace(content) {
                 line: human.line,
                 depth: humanStack.length,
                 enterTimestampUs: human.timestampUs,
-                argsPreview: human.argsPreview
+                argsPreview: human.argsPreview,
             });
             continue;
         }
@@ -105,21 +105,21 @@ function parseTrace(content) {
             enterTimestampUs: pending.enterTimestampUs,
             exitTimestampUs: human.timestampUs,
             durationUs,
-            argsPreview: pending.argsPreview
+            argsPreview: pending.argsPreview,
         });
     }
-    let format = 'unknown';
+    let format = "unknown";
     if (tabularMatches > 0) {
-        format = 'xdebug-tabular';
+        format = "xdebug-tabular";
     }
     else if (humanMatches > 0) {
-        format = 'xdebug-human';
+        format = "xdebug-human";
     }
     return {
         events,
         parsedLines,
         ignoredLines,
-        format
+        format,
     };
 }
 function validateDevSampleTrace() {
@@ -129,14 +129,14 @@ function validateDevSampleTrace() {
     }
     const first = result.events[0];
     if (!first.filePath || !first.line || first.durationUs <= 0) {
-        throw new Error('Invalid dev trace sample: first event must have file, line and positive duration.');
+        throw new Error("Invalid dev trace sample: first event must have file, line and positive duration.");
     }
 }
 function parseTabularLine(line) {
-    if (!line.includes('\t')) {
+    if (!line.includes("\t")) {
         return undefined;
     }
-    const cols = line.split('\t').map((part) => part.trim());
+    const cols = line.split("\t").map((part) => part.trim());
     if (cols.length < 5) {
         return undefined;
     }
@@ -144,17 +144,21 @@ function parseTabularLine(line) {
     const eventTypeRaw = parseInteger(cols[2]);
     const timestamp = parseDecimal(cols[3]);
     const memoryBytes = parseInteger(cols[4]);
-    if (depth === undefined || eventTypeRaw === undefined || timestamp === undefined) {
+    if (depth === undefined ||
+        eventTypeRaw === undefined ||
+        timestamp === undefined) {
         return undefined;
     }
-    const eventType = eventTypeRaw === 0 ? 'enter' : 'exit';
+    const eventType = eventTypeRaw === 0 ? "enter" : "exit";
     const functionRaw = cols[5];
     // Xdebug trace format 4 commonly emits:
     // [0]=level [1]=funcNr [2]=entry/exit [3]=time [4]=memory [5]=func [6]=userDefined
     // [7]=includeFilename [8]=callsiteFile [9]=callsiteLine [10]=numArgs ...
     const callsiteFile = cols[8] || cols[7] || undefined;
     const lineNumber = parseInteger(cols[9]) ?? parseInteger(cols[8]);
-    const parsedFunction = functionRaw ? parseFunctionWithArgs(functionRaw) : undefined;
+    const parsedFunction = functionRaw
+        ? parseFunctionWithArgs(functionRaw)
+        : undefined;
     const argsPreview = parseTabularArgsPreview(cols);
     return {
         depth,
@@ -164,7 +168,7 @@ function parseTabularLine(line) {
         functionName: parsedFunction?.functionName,
         argsPreview: parsedFunction?.argsPreview ?? argsPreview,
         filePath: callsiteFile,
-        line: lineNumber
+        line: lineNumber,
     };
 }
 function computeMemoryDelta(enter, exit) {
@@ -182,12 +186,12 @@ function parseHumanLine(line) {
             return undefined;
         }
         return {
-            type: 'enter',
+            type: "enter",
             timestampUs: secondsToMicros(timestamp),
             functionName: normalizeFunctionName(enterMatch[2]),
             argsPreview: sanitizeArgsPreview(enterMatch[3]),
             filePath: enterMatch[4],
-            line: parseInteger(enterMatch[5])
+            line: parseInteger(enterMatch[5]),
         };
     }
     const exitMatch = line.match(/^\s*(\d+(?:\.\d+)?)\s+\d+\s+(?:\d+\s+)?(?:<-|=>|>=>)\b/);
@@ -199,8 +203,8 @@ function parseHumanLine(line) {
         return undefined;
     }
     return {
-        type: 'exit',
-        timestampUs: secondsToMicros(timestamp)
+        type: "exit",
+        timestampUs: secondsToMicros(timestamp),
     };
 }
 function parseFunctionWithArgs(raw) {
@@ -208,12 +212,12 @@ function parseFunctionWithArgs(raw) {
     const match = text.match(/^(.+?)\((.*)\)$/);
     if (!match) {
         return {
-            functionName: normalizeFunctionName(text)
+            functionName: normalizeFunctionName(text),
         };
     }
     return {
         functionName: normalizeFunctionName(match[1]),
-        argsPreview: sanitizeArgsPreview(match[2])
+        argsPreview: sanitizeArgsPreview(match[2]),
     };
 }
 function parseTabularArgsPreview(cols) {
@@ -225,16 +229,16 @@ function parseTabularArgsPreview(cols) {
     if (args.length === 0) {
         return undefined;
     }
-    return sanitizeArgsPreview(args.join(', '));
+    return sanitizeArgsPreview(args.join(", "));
 }
 function normalizeFunctionName(raw) {
-    return raw.trim() || '[unknown]';
+    return raw.trim() || "[unknown]";
 }
 function sanitizeArgsPreview(raw) {
     if (!raw) {
         return undefined;
     }
-    const compact = raw.replace(/\s+/g, ' ').trim();
+    const compact = raw.replace(/\s+/g, " ").trim();
     if (!compact) {
         return undefined;
     }
@@ -262,9 +266,9 @@ function secondsToMicros(seconds) {
     return seconds * 1_000_000;
 }
 function isTraceMetadataLine(line) {
-    return (line.startsWith('TRACE START') ||
-        line.startsWith('TRACE END') ||
-        line.startsWith('Version:') ||
-        line.startsWith('File format:'));
+    return (line.startsWith("TRACE START") ||
+        line.startsWith("TRACE END") ||
+        line.startsWith("Version:") ||
+        line.startsWith("File format:"));
 }
 //# sourceMappingURL=parser.js.map

@@ -142,7 +142,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: 'refs/heads/main'
+          ref: "refs/heads/main"
 
       - name: Create and push branch
         run: |

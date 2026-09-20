@@ -25,15 +25,17 @@ function headerWithInfo(label, tip) {
     return `<span class="info-wrap"><span>${safeLabel}</span><span class="info-dot" data-tip="${safeTip}">i</span></span>`;
 }
 function sortableHeader(label, tip) {
-    const content = tip ? headerWithInfo(label, tip) : `<span>${escapeHtmlAttr(label)}</span>`;
+    const content = tip
+        ? headerWithInfo(label, tip)
+        : `<span>${escapeHtmlAttr(label)}</span>`;
     return `<span class="th-wrap">${content}<span class="sort-ind">↕</span></span>`;
 }
 function escapeHtmlAttr(value) {
     return value
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
 }
 //# sourceMappingURL=templateHelpers.js.map

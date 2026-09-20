@@ -40,14 +40,14 @@ const parser_1 = require("../cachegrind/parser");
 const sourceResolver_1 = require("../source/sourceResolver");
 const i18n_1 = require("./i18n");
 const templateHelpers_1 = require("./templateHelpers");
-exports.XDEBUG_PROFILE_VIEW_TYPE = 'xdebugProfileViewer.viewer';
+exports.XDEBUG_PROFILE_VIEW_TYPE = "xdebugProfileViewer.viewer";
 class XdebugProfileReadonlyEditorProvider {
     context;
     sourceResolver = new sourceResolver_1.SourceResolver();
     static register(context) {
         const provider = new XdebugProfileReadonlyEditorProvider(context);
         return vscode.window.registerCustomEditorProvider(exports.XDEBUG_PROFILE_VIEW_TYPE, provider, {
-            supportsMultipleEditorsPerDocument: true
+            supportsMultipleEditorsPerDocument: true,
         });
     }
     constructor(context) {
@@ -60,12 +60,12 @@ class XdebugProfileReadonlyEditorProvider {
         webviewPanel.title = `Xdebug Profile Viewer: ${path.basename(document.uri.fsPath)}`;
         webviewPanel.webview.options = {
             enableScripts: true,
-            localResourceRoots: [this.context.extensionUri]
+            localResourceRoots: [this.context.extensionUri],
         };
         const profile = await this.readProfile(document.uri);
         webviewPanel.webview.html = this.getHtml(webviewPanel.webview, profile, document.uri);
         webviewPanel.webview.onDidReceiveMessage(async (message) => {
-            if (message.type !== 'openSource' || !message.file) {
+            if (message.type !== "openSource" || !message.file) {
                 return;
             }
             await this.openSourceLocation(message.file, message.line, document.uri);
@@ -74,14 +74,14 @@ class XdebugProfileReadonlyEditorProvider {
     async readProfile(uri) {
         try {
             const bytes = await vscode.workspace.fs.readFile(uri);
-            const text = new TextDecoder('utf-8').decode(bytes);
+            const text = new TextDecoder("utf-8").decode(bytes);
             return (0, parser_1.parseCachegrind)(text);
         }
         catch (error) {
             const errText = error instanceof Error ? error.message : String(error);
             return {
-                events: ['cost'],
-                primaryEvent: 'cost',
+                events: ["cost"],
+                primaryEvent: "cost",
                 eventScaleNs: {},
                 summaryByEvent: {},
                 metadata: {},
@@ -93,7 +93,7 @@ class XdebugProfileReadonlyEditorProvider {
                 maxDegree: 0,
                 functions: [
                     {
-                        id: 'error',
+                        id: "error",
                         name: `Unable to parse file: ${errText}`,
                         inclusive: 0,
                         self: 0,
@@ -102,10 +102,10 @@ class XdebugProfileReadonlyEditorProvider {
                         callers: [],
                         callees: [],
                         eventCosts: {
-                            cost: { inclusive: 0, self: 0 }
-                        }
-                    }
-                ]
+                            cost: { inclusive: 0, self: 0 },
+                        },
+                    },
+                ],
             };
         }
     }
@@ -117,7 +117,9 @@ class XdebugProfileReadonlyEditorProvider {
             return;
         }
         const doc = await vscode.workspace.openTextDocument(targetUri);
-        const editor = await vscode.window.showTextDocument(doc, { preview: false });
+        const editor = await vscode.window.showTextDocument(doc, {
+            preview: false,
+        });
         if (line && line > 0) {
             const position = new vscode.Position(line - 1, 0);
             editor.selection = new vscode.Selection(position, position);
@@ -133,15 +135,15 @@ class XdebugProfileReadonlyEditorProvider {
             ui,
             profile: {
                 ...profile,
-                functions: profile.functions.map((fn) => normalizeFunction(fn))
-            }
-        }).replace(/</g, '\\u003c');
+                functions: profile.functions.map((fn) => normalizeFunction(fn)),
+            },
+        }).replace(/</g, "\\u003c");
         const csp = [
             "default-src 'none'",
             `style-src ${webview.cspSource} 'nonce-${nonce}'`,
             `script-src 'nonce-${nonce}'`,
-            'img-src data:'
-        ].join('; ');
+            "img-src data:",
+        ].join("; ");
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -654,7 +656,7 @@ class XdebugProfileReadonlyEditorProvider {
 				<table>
 					<thead>
 						<tr>
-							<th data-sort="rank">${(0, templateHelpers_1.sortableHeader)('#')}</th>
+							<th data-sort="rank">${(0, templateHelpers_1.sortableHeader)("#")}</th>
 							<th data-sort="function">${(0, templateHelpers_1.sortableHeader)(ui.function)}</th>
 							<th data-sort="criticality">${(0, templateHelpers_1.sortableHeader)(ui.criticality, ui.tipCriticality)}</th>
 							<th data-sort="cpuSelf">${(0, templateHelpers_1.sortableHeader)(ui.cpuSelf, ui.tipCpuSelf)}</th>
@@ -1729,8 +1731,8 @@ class XdebugProfileReadonlyEditorProvider {
 }
 exports.XdebugProfileReadonlyEditorProvider = XdebugProfileReadonlyEditorProvider;
 function createNonce() {
-    const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let nonce = '';
+    const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let nonce = "";
     for (let i = 0; i < 32; i += 1) {
         nonce += alphabet[Math.floor(Math.random() * alphabet.length)];
     }
@@ -1741,9 +1743,15 @@ function normalizeFunction(fn) {
         ...fn,
         callsObserved: Number(fn.callsObserved || 0),
         callsEffective: Number(fn.callsEffective || fn.callsObserved || 0),
-        callers: (fn.callers ?? []).map((edge) => ({ ...edge, eventCosts: edge.eventCosts ?? {} })),
-        callees: (fn.callees ?? []).map((edge) => ({ ...edge, eventCosts: edge.eventCosts ?? {} })),
-        eventCosts: fn.eventCosts ?? {}
+        callers: (fn.callers ?? []).map((edge) => ({
+            ...edge,
+            eventCosts: edge.eventCosts ?? {},
+        })),
+        callees: (fn.callees ?? []).map((edge) => ({
+            ...edge,
+            eventCosts: edge.eventCosts ?? {},
+        })),
+        eventCosts: fn.eventCosts ?? {},
     };
 }
 //# sourceMappingURL=customEditor.js.map

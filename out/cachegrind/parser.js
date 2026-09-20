@@ -4,7 +4,7 @@ exports.DEV_SAMPLE_CACHEGRIND = void 0;
 exports.parseCachegrind = parseCachegrind;
 exports.validateProfile = validateProfile;
 exports.validateDevSampleProfile = validateDevSampleProfile;
-const UNKNOWN_NAME = '[unknown]';
+const UNKNOWN_NAME = "[unknown]";
 const ENTRYPOINT_RE = /(?:^|[:\\])(?:main|\{main\})(?:$|[:\\])/i;
 // Inline sample for manual/dev invariant checks.
 exports.DEV_SAMPLE_CACHEGRIND = `events: Time Memory
@@ -19,9 +19,9 @@ fl=/sample.php
 fn=work
 10 30 4`;
 function parseCachegrind(content) {
-    const events = ['cost'];
+    const events = ["cost"];
     let eventScaleNs = {};
-    let primaryEvent = 'cost';
+    let primaryEvent = "cost";
     let summary;
     let summaryByEvent = {};
     let summaryWasProvided = false;
@@ -35,12 +35,12 @@ function parseCachegrind(content) {
     let currentEdge;
     for (const rawLine of content.split(/\r?\n/)) {
         const line = rawLine.trim();
-        if (!line || line.startsWith('#')) {
+        if (!line || line.startsWith("#")) {
             continue;
         }
-        if (line.startsWith('events:')) {
+        if (line.startsWith("events:")) {
             const eventNames = line
-                .slice('events:'.length)
+                .slice("events:".length)
                 .trim()
                 .split(/\s+/)
                 .filter(Boolean);
@@ -57,8 +57,8 @@ function parseCachegrind(content) {
             }
             continue;
         }
-        if (line.startsWith('summary:')) {
-            const values = parseManyNumbers(line.slice('summary:'.length));
+        if (line.startsWith("summary:")) {
+            const values = parseManyNumbers(line.slice("summary:".length));
             const value = values[0];
             if (value !== undefined) {
                 summary = value;
@@ -73,22 +73,22 @@ function parseCachegrind(content) {
             metadata[key] = value;
             continue;
         }
-        if (line.startsWith('fl=')) {
+        if (line.startsWith("fl=")) {
             currentFile = resolveSymbol(line.slice(3), fileSymbols);
             currentEdge = undefined;
             continue;
         }
-        if (line.startsWith('fn=')) {
+        if (line.startsWith("fn=")) {
             const functionName = resolveSymbol(line.slice(3), fnSymbols);
             currentFunction = getOrCreateFunction(functions, functionName, currentFile);
             currentEdge = undefined;
             continue;
         }
-        if (line.startsWith('cfl=')) {
+        if (line.startsWith("cfl=")) {
             currentCalleeFile = resolveSymbol(line.slice(4), fileSymbols);
             continue;
         }
-        if (line.startsWith('cfn=')) {
+        if (line.startsWith("cfn=")) {
             if (!currentFunction) {
                 continue;
             }
@@ -97,11 +97,14 @@ function parseCachegrind(content) {
             currentEdge = getOrCreateEdge(currentFunction, callee);
             continue;
         }
-        if (line.startsWith('calls=')) {
+        if (line.startsWith("calls=")) {
             if (!currentEdge) {
                 continue;
             }
-            const [callsRaw, lineRaw] = line.slice('calls='.length).trim().split(/\s+/, 2);
+            const [callsRaw, lineRaw] = line
+                .slice("calls=".length)
+                .trim()
+                .split(/\s+/, 2);
             const callCount = parseSingleNumber(callsRaw);
             if (callCount !== undefined) {
                 currentEdge.calls += callCount;
@@ -124,7 +127,9 @@ function parseCachegrind(content) {
             continue;
         }
         const parsedLine = parsedData.line;
-        if (!currentEdge && parsedLine !== undefined && currentFunction.line === undefined) {
+        if (!currentEdge &&
+            parsedLine !== undefined &&
+            currentFunction.line === undefined) {
             currentFunction.line = parsedLine;
         }
         const primaryCost = getPrimaryCost(parsedData.values);
@@ -159,7 +164,7 @@ function parseCachegrind(content) {
             calls: edge.calls,
             file: edge.file,
             line: edge.line,
-            eventCosts: mapToObject(edge.eventCosts)
+            eventCosts: mapToObject(edge.eventCosts),
         })),
         callees: Array.from(fn.callees.values()).map((edge) => ({
             name: edge.name,
@@ -167,9 +172,9 @@ function parseCachegrind(content) {
             calls: edge.calls,
             file: edge.file,
             line: edge.line,
-            eventCosts: mapToObject(edge.eventCosts)
+            eventCosts: mapToObject(edge.eventCosts),
         })),
-        eventCosts: mapToObject(fn.eventCosts)
+        eventCosts: mapToObject(fn.eventCosts),
     }));
     functionList.sort((a, b) => b.inclusive - a.inclusive);
     const sumInclusive = functionList.reduce((acc, fn) => acc + fn.inclusive, 0);
@@ -191,7 +196,7 @@ function parseCachegrind(content) {
         maxFanIn,
         maxFanOut,
         maxDegree,
-        functions: functionList
+        functions: functionList,
     };
     if (isDevMode()) {
         validateProfile(profile, { requireEventSelfMatch: !summaryWasProvided });
@@ -201,7 +206,7 @@ function parseCachegrind(content) {
 function validateProfile(profile, options = {}) {
     const errors = [];
     const requireEventSelfMatch = Boolean(options.requireEventSelfMatch);
-    const activeEvents = profile.events.length > 0 ? profile.events : ['cost'];
+    const activeEvents = profile.events.length > 0 ? profile.events : ["cost"];
     if (requireEventSelfMatch) {
         for (const eventName of activeEvents) {
             const expected = profile.functions.reduce((sum, fn) => sum + Number(fn.eventCosts[eventName]?.self ?? 0), 0);
@@ -225,7 +230,7 @@ function validateProfile(profile, options = {}) {
         }
     }
     if (errors.length > 0) {
-        throw new Error(`Invalid cachegrind profile invariants:\n- ${errors.join('\n- ')}`);
+        throw new Error(`Invalid cachegrind profile invariants:\n- ${errors.join("\n- ")}`);
     }
 }
 function validateDevSampleProfile() {
@@ -254,7 +259,7 @@ function buildReverseEdges(functions) {
                 calls: edge.calls,
                 file: fn.file,
                 line: fn.line,
-                eventCosts: cloneEventCostMap(edge.eventCosts)
+                eventCosts: cloneEventCostMap(edge.eventCosts),
             });
         }
     }
@@ -279,7 +284,7 @@ function getOrCreateFunction(functions, name, file) {
         file,
         callers: new Map(),
         callees: new Map(),
-        eventCosts: new Map()
+        eventCosts: new Map(),
     };
     functions.set(key, fn);
     return fn;
@@ -297,7 +302,7 @@ function getOrCreateEdge(source, target) {
         calls: 0,
         file: target.file,
         line: target.line,
-        eventCosts: new Map()
+        eventCosts: new Map(),
     };
     source.callees.set(key, edge);
     return edge;
@@ -337,7 +342,7 @@ function parseDataLine(line) {
     }
     return {
         line: parseSingleNumber(parts[0]),
-        values
+        values,
     };
 }
 function getPrimaryCost(values) {
@@ -347,7 +352,7 @@ function parseSingleNumber(raw) {
     if (!raw) {
         return undefined;
     }
-    const normalized = raw.replace(/,/g, '');
+    const normalized = raw.replace(/,/g, "");
     if (!/^-?\d+(\.\d+)?$/.test(normalized)) {
         return undefined;
     }
@@ -355,10 +360,10 @@ function parseSingleNumber(raw) {
     return Number.isFinite(value) ? value : undefined;
 }
 function buildFunctionKey(name, file) {
-    return `${name}\u0000${file ?? ''}`;
+    return `${name}\u0000${file ?? ""}`;
 }
 function applyEventCostsToMap(costMap, values, events, isSelf) {
-    const activeEvents = events.length > 0 ? events : ['cost'];
+    const activeEvents = events.length > 0 ? events : ["cost"];
     for (let i = 0; i < activeEvents.length; i += 1) {
         const event = activeEvents[i];
         const value = values[i] ?? 0;
@@ -373,7 +378,10 @@ function applyEventCostsToMap(costMap, values, events, isSelf) {
 function cloneEventCostMap(map) {
     const clone = new Map();
     for (const [eventName, eventCost] of map.entries()) {
-        clone.set(eventName, { inclusive: eventCost.inclusive, self: eventCost.self });
+        clone.set(eventName, {
+            inclusive: eventCost.inclusive,
+            self: eventCost.self,
+        });
     }
     return clone;
 }
@@ -404,7 +412,7 @@ function parseManyNumbers(raw) {
 }
 function toEventTotals(values, events) {
     const out = {};
-    const activeEvents = events.length > 0 ? events : ['cost'];
+    const activeEvents = events.length > 0 ? events : ["cost"];
     for (let i = 0; i < activeEvents.length; i += 1) {
         out[activeEvents[i]] = values[i] ?? 0;
     }
@@ -433,22 +441,22 @@ function computeSelfTotals(functions, events) {
     return totals;
 }
 function isDevMode() {
-    return process.env.NODE_ENV !== 'production';
+    return process.env.NODE_ENV !== "production";
 }
 function extractTimeScaleNs(eventName) {
-    const text = String(eventName || '').toLowerCase();
+    const text = String(eventName || "").toLowerCase();
     if (!/time|ns|us|µs|μs|ms|sec|second|minute|hour/.test(text)) {
         return undefined;
     }
     const tuple = text.match(/\((\d+(?:[.,]\d+)?)\s*(ns|us|µs|μs|ms|s|nsec|usec|msec|sec)\)/i);
     if (tuple) {
-        const amount = Number(tuple[1].replace(',', '.'));
+        const amount = Number(tuple[1].replace(",", "."));
         const unit = tuple[2].toLowerCase();
         return amount * unitToNs(unit);
     }
     const inline = text.match(/(\d+(?:[.,]\d+)?)\s*(ns|us|µs|μs|ms|s|nsec|usec|msec|sec)\b/i);
     if (inline) {
-        const amount = Number(inline[1].replace(',', '.'));
+        const amount = Number(inline[1].replace(",", "."));
         const unit = inline[2].toLowerCase();
         return amount * unitToNs(unit);
     }
@@ -468,19 +476,19 @@ function extractTimeScaleNs(eventName) {
 }
 function unitToNs(unit) {
     switch (unit) {
-        case 'ns':
-        case 'nsec':
+        case "ns":
+        case "nsec":
             return 1;
-        case 'us':
-        case 'µs':
-        case 'μs':
-        case 'usec':
+        case "us":
+        case "µs":
+        case "μs":
+        case "usec":
             return 1e3;
-        case 'ms':
-        case 'msec':
+        case "ms":
+        case "msec":
             return 1e6;
-        case 's':
-        case 'sec':
+        case "s":
+        case "sec":
             return 1e9;
         default:
             return 1;

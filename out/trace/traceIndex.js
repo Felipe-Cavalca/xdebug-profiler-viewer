@@ -37,7 +37,12 @@ exports.TraceIndex = void 0;
 const vscode = __importStar(require("vscode"));
 const sourceResolver_1 = require("../source/sourceResolver");
 const parser_1 = require("./parser");
-const DEFAULT_TRACE_GLOBS = ['**/trace*.xt', '**/xdebug-trace*.xt', '**/*.trace', '**/*.xt'];
+const DEFAULT_TRACE_GLOBS = [
+    "**/trace*.xt",
+    "**/xdebug-trace*.xt",
+    "**/*.trace",
+    "**/*.xt",
+];
 const TRACE_INDEX_SCAN_LIMIT = 10000;
 const DEFAULT_INDEX_DEBOUNCE_MS = 350;
 const DEFAULT_INDEX_RETRY_MS = 900;
@@ -72,7 +77,7 @@ class TraceIndex {
         this.sourceResolutionCache.clear();
         const uriMap = new Map();
         const globs = this.getTraceGlobs();
-        const results = await Promise.all(globs.map((glob) => vscode.workspace.findFiles(glob, '**/node_modules/**', TRACE_INDEX_SCAN_LIMIT)));
+        const results = await Promise.all(globs.map((glob) => vscode.workspace.findFiles(glob, "**/node_modules/**", TRACE_INDEX_SCAN_LIMIT)));
         for (const batch of results) {
             for (const uri of batch) {
                 uriMap.set(uri.toString(), uri);
@@ -106,13 +111,14 @@ class TraceIndex {
                 traceMtime: state.mtime,
                 traceKey: buildTraceIdentity(state.traceUri, state.mtime),
                 hits,
-                lines
+                lines,
             };
             if (!best || candidate.traceMtime > best.traceMtime) {
                 best = candidate;
                 continue;
             }
-            if (candidate.traceMtime === best.traceMtime && candidate.hits > best.hits) {
+            if (candidate.traceMtime === best.traceMtime &&
+                candidate.hits > best.hits) {
                 best = candidate;
             }
         }
@@ -132,7 +138,7 @@ class TraceIndex {
                     traceMtime: state.mtime,
                     traceKey: buildTraceIdentity(state.traceUri, state.mtime),
                     hits,
-                    lines
+                    lines,
                 };
             }
         }
@@ -152,7 +158,8 @@ class TraceIndex {
                     bestByLine.set(candidate.line, candidate);
                     continue;
                 }
-                if (candidate.traceMtime === current.traceMtime && candidate.count > current.count) {
+                if (candidate.traceMtime === current.traceMtime &&
+                    candidate.count > current.count) {
                     bestByLine.set(candidate.line, candidate);
                 }
             }
@@ -196,8 +203,11 @@ class TraceIndex {
         const key = uri.toString();
         this.profileByKey.delete(key);
         try {
-            const [fileStat, bytes] = await Promise.all([vscode.workspace.fs.stat(uri), vscode.workspace.fs.readFile(uri)]);
-            const text = new TextDecoder('utf-8').decode(bytes);
+            const [fileStat, bytes] = await Promise.all([
+                vscode.workspace.fs.stat(uri),
+                vscode.workspace.fs.readFile(uri),
+            ]);
+            const text = new TextDecoder("utf-8").decode(bytes);
             const parsed = (0, parser_1.parseTrace)(text);
             const state = await this.buildProfileState(uri, fileStat.mtime, parsed.events);
             this.profileByKey.set(key, state);
@@ -242,29 +252,34 @@ class TraceIndex {
         this.pendingUpserts.set(key, timer);
     }
     getTraceGlobs() {
-        const cfg = vscode.workspace.getConfiguration('xdebugProfileViewer');
-        const configured = cfg.get('lineTimings.traceGlobs', DEFAULT_TRACE_GLOBS);
+        const cfg = vscode.workspace.getConfiguration("xdebugProfileViewer");
+        const configured = cfg.get("lineTimings.traceGlobs", DEFAULT_TRACE_GLOBS);
         if (!Array.isArray(configured) || configured.length === 0) {
             return DEFAULT_TRACE_GLOBS;
         }
-        const normalized = configured.map((glob) => String(glob || '').trim()).filter(Boolean);
+        const normalized = configured
+            .map((glob) => String(glob || "").trim())
+            .filter(Boolean);
         return normalized.length > 0 ? normalized : DEFAULT_TRACE_GLOBS;
     }
     getIndexOptions() {
-        const cfg = vscode.workspace.getConfiguration('xdebugProfileViewer');
-        const debounceMsRaw = cfg.get('codeLens.profilerIndexDebounceMs', DEFAULT_INDEX_DEBOUNCE_MS);
-        const retryMsRaw = cfg.get('codeLens.profilerIndexRetryMs', DEFAULT_INDEX_RETRY_MS);
-        const maxRetriesRaw = cfg.get('codeLens.profilerIndexMaxRetries', DEFAULT_MAX_INDEX_RETRIES);
+        const cfg = vscode.workspace.getConfiguration("xdebugProfileViewer");
+        const debounceMsRaw = cfg.get("codeLens.profilerIndexDebounceMs", DEFAULT_INDEX_DEBOUNCE_MS);
+        const retryMsRaw = cfg.get("codeLens.profilerIndexRetryMs", DEFAULT_INDEX_RETRY_MS);
+        const maxRetriesRaw = cfg.get("codeLens.profilerIndexMaxRetries", DEFAULT_MAX_INDEX_RETRIES);
         return {
             debounceMs: clampInt(debounceMsRaw, 0, 5000, DEFAULT_INDEX_DEBOUNCE_MS),
             retryMs: clampInt(retryMsRaw, 100, 10000, DEFAULT_INDEX_RETRY_MS),
-            maxRetries: clampInt(maxRetriesRaw, 0, 10, DEFAULT_MAX_INDEX_RETRIES)
+            maxRetries: clampInt(maxRetriesRaw, 0, 10, DEFAULT_MAX_INDEX_RETRIES),
         };
     }
     async buildProfileState(traceUri, mtime, events) {
         const mutableByPathLine = new Map();
         for (const event of events) {
-            if (!event.filePath || !event.line || event.line <= 0 || event.durationUs <= 0) {
+            if (!event.filePath ||
+                !event.line ||
+                event.line <= 0 ||
+                event.durationUs <= 0) {
                 continue;
             }
             const resolvedPath = await this.resolveSourcePath(event.filePath, traceUri);
@@ -283,13 +298,14 @@ class TraceIndex {
                     minDurationUs: event.durationUs,
                     maxDurationUs: event.durationUs,
                     functionStatsByName: new Map(),
-                    topSlowEvents: []
+                    topSlowEvents: [],
                 };
                 mutableByPathLine.set(key, bucket);
             }
             bucket.totalDurationUs += event.durationUs;
             if (event.memoryDeltaBytes !== undefined) {
-                bucket.totalMemoryDeltaBytes = (bucket.totalMemoryDeltaBytes ?? 0) + event.memoryDeltaBytes;
+                bucket.totalMemoryDeltaBytes =
+                    (bucket.totalMemoryDeltaBytes ?? 0) + event.memoryDeltaBytes;
             }
             bucket.count += 1;
             bucket.minDurationUs = Math.min(bucket.minDurationUs, event.durationUs);
@@ -299,17 +315,18 @@ class TraceIndex {
                 durationUs: event.durationUs,
                 depth: event.depth,
                 memoryDeltaBytes: event.memoryDeltaBytes,
-                argsPreview: event.argsPreview
+                argsPreview: event.argsPreview,
             });
             const currentFunction = bucket.functionStatsByName.get(event.functionName) ?? {
                 totalDurationUs: 0,
                 count: 0,
-                totalMemoryDeltaBytes: undefined
+                totalMemoryDeltaBytes: undefined,
             };
             currentFunction.totalDurationUs += event.durationUs;
             currentFunction.count += 1;
             if (event.memoryDeltaBytes !== undefined) {
-                currentFunction.totalMemoryDeltaBytes = (currentFunction.totalMemoryDeltaBytes ?? 0) + event.memoryDeltaBytes;
+                currentFunction.totalMemoryDeltaBytes =
+                    (currentFunction.totalMemoryDeltaBytes ?? 0) + event.memoryDeltaBytes;
             }
             bucket.functionStatsByName.set(event.functionName, currentFunction);
         }
@@ -330,7 +347,7 @@ class TraceIndex {
                 minDurationUs: bucket.minDurationUs,
                 maxDurationUs: bucket.maxDurationUs,
                 functionStats: buildFunctionStats(bucket.functionStatsByName),
-                topSlowEvents: [...bucket.topSlowEvents]
+                topSlowEvents: [...bucket.topSlowEvents],
             };
             const existing = lineStatsBySourcePath.get(bucket.normalizedSourcePath);
             if (existing) {
@@ -345,7 +362,7 @@ class TraceIndex {
             traceUri,
             mtime,
             lineStatsBySourcePath,
-            hitsBySourcePath
+            hitsBySourcePath,
         };
     }
     async resolveSourcePath(sourcePath, traceUri) {
@@ -396,7 +413,7 @@ function buildFunctionStats(byName) {
             count: entry.count,
             avgDurationUs,
             totalMemoryDeltaBytes: entry.totalMemoryDeltaBytes,
-            avgMemoryDeltaBytes
+            avgMemoryDeltaBytes,
         });
     }
     out.sort((a, b) => b.totalDurationUs - a.totalDurationUs);

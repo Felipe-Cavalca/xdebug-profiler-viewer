@@ -29,7 +29,9 @@ interface OpenSourceMessage {
   line?: number;
 }
 
-export class XdebugProfileReadonlyEditorProvider implements vscode.CustomReadonlyEditorProvider<XdebugProfileDocument> {
+export class XdebugProfileReadonlyEditorProvider
+  implements vscode.CustomReadonlyEditorProvider<XdebugProfileDocument>
+{
   private readonly sourceResolver = new SourceResolver();
 
   public static register(context: vscode.ExtensionContext): vscode.Disposable {

@@ -37,7 +37,7 @@ exports.LineTimingsInlayHintsProvider = exports.SHOW_LINE_TIMING_DETAILS_COMMAND
 exports.showLineTimingDetailsCommand = showLineTimingDetailsCommand;
 const path = __importStar(require("node:path"));
 const vscode = __importStar(require("vscode"));
-exports.SHOW_LINE_TIMING_DETAILS_COMMAND = 'xdebugProfileViewer.showLineTimingDetails';
+exports.SHOW_LINE_TIMING_DETAILS_COMMAND = "xdebugProfileViewer.showLineTimingDetails";
 class LineTimingsInlayHintsProvider {
     traceIndex;
     didChangeEmitter = new vscode.EventEmitter();
@@ -91,9 +91,9 @@ class LineTimingsInlayHintsProvider {
             const label = buildHintLabel(stat, showLoopsAsAggregate);
             const labelPart = new vscode.InlayHintLabelPart(label);
             labelPart.command = {
-                title: 'Show line timing details',
+                title: "Show line timing details",
                 command: exports.SHOW_LINE_TIMING_DETAILS_COMMAND,
-                arguments: [document.uri, stat.line]
+                arguments: [document.uri, stat.line],
             };
             const hint = new vscode.InlayHint(position, [labelPart]);
             hint.paddingLeft = true;
@@ -109,10 +109,10 @@ exports.LineTimingsInlayHintsProvider = LineTimingsInlayHintsProvider;
 async function showLineTimingDetailsCommand(traceIndex, documentUri, line) {
     const stat = traceIndex.getLineStats(documentUri, line);
     if (!stat) {
-        void vscode.window.showInformationMessage('Sem detalhes de tempo para esta linha nos traces indexados.');
+        void vscode.window.showInformationMessage("Sem detalhes de tempo para esta linha nos traces indexados.");
         return;
     }
-    const panel = vscode.window.createWebviewPanel('xdebugProfileViewer.lineTimingDetails', `Line Timings: ${path.basename(documentUri.fsPath)}:${line}`, vscode.ViewColumn.Beside, { enableFindWidget: true });
+    const panel = vscode.window.createWebviewPanel("xdebugProfileViewer.lineTimingDetails", `Line Timings: ${path.basename(documentUri.fsPath)}:${line}`, vscode.ViewColumn.Beside, { enableFindWidget: true });
     panel.webview.html = buildLineTimingDetailsHtml(stat, documentUri, line);
 }
 function buildHintLabel(stat, showLoopsAsAggregate) {
@@ -127,8 +127,8 @@ function buildHintTooltip(stat) {
         `Tempo total da linha: **${formatDurationUs(stat.totalDurationUs)}**`,
         `Memoria (delta total): **${formatMemoryDelta(stat.totalMemoryDeltaBytes)}**`,
         `Chamadas atribuidas a linha: **${stat.count}**`,
-        `Timestamp do trace: ${new Date(stat.traceMtime).toLocaleString()}`
-    ].join('  \n');
+        `Timestamp do trace: ${new Date(stat.traceMtime).toLocaleString()}`,
+    ].join("  \n");
 }
 function buildLineTimingDetailsHtml(stat, documentUri, line) {
     const traceFile = escapeHtml(path.basename(stat.traceUri.fsPath));
@@ -146,11 +146,11 @@ function buildLineTimingDetailsHtml(stat, documentUri, line) {
 <td>${formatMemoryDelta(fn.totalMemoryDeltaBytes)}</td>
 </tr>`;
     })
-        .join('\n');
+        .join("\n");
     const eventRows = stat.topSlowEvents
         .map((event, index) => {
         const fn = escapeHtml(event.functionName);
-        const args = event.argsPreview ? escapeHtml(event.argsPreview) : '-';
+        const args = event.argsPreview ? escapeHtml(event.argsPreview) : "-";
         return `<tr>
 <td>${index + 1}</td>
 <td>${fn}</td>
@@ -160,7 +160,7 @@ function buildLineTimingDetailsHtml(stat, documentUri, line) {
 <td>${args}</td>
 </tr>`;
     })
-        .join('\n');
+        .join("\n");
     return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -223,9 +223,9 @@ function formatDurationUs(durationUs) {
 }
 function formatMemoryDelta(memoryBytes) {
     if (memoryBytes === undefined || !Number.isFinite(memoryBytes)) {
-        return 'n/d';
+        return "n/d";
     }
-    const sign = memoryBytes > 0 ? '+' : '';
+    const sign = memoryBytes > 0 ? "+" : "";
     const abs = Math.abs(memoryBytes);
     if (abs >= 1024 * 1024) {
         return `${sign}${(memoryBytes / (1024 * 1024)).toFixed(2)} MB`;
@@ -237,17 +237,18 @@ function formatMemoryDelta(memoryBytes) {
 }
 function escapeHtml(value) {
     return value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
 function mapStatsToCurrentDocument(stats, document, lineRemapRadius) {
     const out = [];
     const usedLines = new Set();
     for (const stat of stats) {
-        const mapped = findBestCurrentLineForStat(stat, document, usedLines, lineRemapRadius) ?? stat.line;
+        const mapped = findBestCurrentLineForStat(stat, document, usedLines, lineRemapRadius) ??
+            stat.line;
         usedLines.add(mapped);
         out.push({ stat, displayLine: mapped });
     }
@@ -286,7 +287,7 @@ function buildSearchTokens(stat) {
             if (token.length < 3) {
                 continue;
             }
-            if (token === 'closure' || token === 'class' || token === 'function') {
+            if (token === "closure" || token === "class" || token === "function") {
                 continue;
             }
             tokens.add(token);
@@ -339,19 +340,29 @@ function normalizeLineText(text) {
     return text.toLowerCase();
 }
 function isLineTimingsEnabled() {
-    return vscode.workspace.getConfiguration('xdebugProfileViewer').get('lineTimings.enabled', true);
+    return vscode.workspace
+        .getConfiguration("xdebugProfileViewer")
+        .get("lineTimings.enabled", true);
 }
 function getMinDurationMs() {
-    return vscode.workspace.getConfiguration('xdebugProfileViewer').get('lineTimings.minDurationMs', 0);
+    return vscode.workspace
+        .getConfiguration("xdebugProfileViewer")
+        .get("lineTimings.minDurationMs", 0);
 }
 function getShowLoopsAsAggregate() {
-    return vscode.workspace.getConfiguration('xdebugProfileViewer').get('lineTimings.showLoopsAsAggregate', true);
+    return vscode.workspace
+        .getConfiguration("xdebugProfileViewer")
+        .get("lineTimings.showLoopsAsAggregate", true);
 }
 function getMaxHintsPerFile() {
-    return vscode.workspace.getConfiguration('xdebugProfileViewer').get('lineTimings.maxHintsPerFile', 200);
+    return vscode.workspace
+        .getConfiguration("xdebugProfileViewer")
+        .get("lineTimings.maxHintsPerFile", 200);
 }
 function getLineRemapRadius() {
-    const raw = vscode.workspace.getConfiguration('xdebugProfileViewer').get('lineTimings.lineRemapRadius', 120);
+    const raw = vscode.workspace
+        .getConfiguration("xdebugProfileViewer")
+        .get("lineTimings.lineRemapRadius", 120);
     if (!Number.isFinite(raw)) {
         return 120;
     }

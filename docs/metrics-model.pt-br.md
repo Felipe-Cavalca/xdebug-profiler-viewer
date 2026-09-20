@@ -28,6 +28,7 @@ Sim, isso pode acontecer e faz sentido.
 - `inclusive` agregado (ou inclusive de uma funcao em cenarios recursivos/sobrepostos) pode passar `totalSelf`.
 
 Portanto:
+
 - compare `%Self` contra `totalSelf`.
 - use `inclusive` para analise de fluxo/delegacao, nao como total global unico.
 
@@ -121,6 +122,7 @@ Indicador de oportunidade de ganho em otimizacao:
 - limitado em `[0,100]`
 
 Interpretacao:
+
 - quanto maior, maior potencial de ganho ao otimizar diretamente essa funcao.
 
 ### Churn Risk
@@ -135,6 +137,7 @@ Indicador de risco de impacto/refactor:
 - limitado em `[0,100]`
 
 Interpretacao:
+
 - quanto maior, maior o raio de impacto de mudanca.
 
 ## 8. Metricas de Eficiencia

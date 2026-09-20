@@ -37,7 +37,12 @@ exports.ProfilerIndex = void 0;
 const vscode = __importStar(require("vscode"));
 const parser_1 = require("../cachegrind/parser");
 const sourceResolver_1 = require("../source/sourceResolver");
-const PROFILER_GLOBS = ['**/cachegrind.out.*', '**/*.cachegrind', '**/*.cg', '**/*.out'];
+const PROFILER_GLOBS = [
+    "**/cachegrind.out.*",
+    "**/*.cachegrind",
+    "**/*.cg",
+    "**/*.out",
+];
 const FUNCTION_INDEX_SCAN_LIMIT = 10000;
 const DEFAULT_INDEX_DEBOUNCE_MS = 350;
 const DEFAULT_INDEX_RETRY_MS = 900;
@@ -77,7 +82,7 @@ class ProfilerIndex {
         this.occurrencesByName.clear();
         this.sourceResolutionCache.clear();
         const uriMap = new Map();
-        const results = await Promise.all(PROFILER_GLOBS.map((glob) => vscode.workspace.findFiles(glob, '**/node_modules/**', FUNCTION_INDEX_SCAN_LIMIT)));
+        const results = await Promise.all(PROFILER_GLOBS.map((glob) => vscode.workspace.findFiles(glob, "**/node_modules/**", FUNCTION_INDEX_SCAN_LIMIT)));
         for (const batch of results) {
             for (const uri of batch) {
                 uriMap.set(uri.toString(), uri);
@@ -119,7 +124,7 @@ class ProfilerIndex {
             functionData,
             profile: profileState.profile,
             profileUri: profileState.profileUri,
-            profileMtime: profileState.mtime
+            profileMtime: profileState.mtime,
         };
     }
     dispose() {
@@ -138,15 +143,18 @@ class ProfilerIndex {
         const key = uri.toString();
         this.removeProfileByKey(key);
         try {
-            const [fileStat, bytes] = await Promise.all([vscode.workspace.fs.stat(uri), vscode.workspace.fs.readFile(uri)]);
-            const text = new TextDecoder('utf-8').decode(bytes);
+            const [fileStat, bytes] = await Promise.all([
+                vscode.workspace.fs.stat(uri),
+                vscode.workspace.fs.readFile(uri),
+            ]);
+            const text = new TextDecoder("utf-8").decode(bytes);
             const profile = (0, parser_1.parseCachegrind)(text);
             const occurrences = await this.buildOccurrencesForProfile(uri, fileStat.mtime, profile);
             const state = {
                 profileUri: uri,
                 mtime: fileStat.mtime,
                 profile,
-                occurrences
+                occurrences,
             };
             this.profileByKey.set(key, state);
             this.addOccurrences(occurrences);
@@ -191,14 +199,14 @@ class ProfilerIndex {
         this.pendingUpserts.set(key, timer);
     }
     getIndexOptions() {
-        const cfg = vscode.workspace.getConfiguration('xdebugProfileViewer');
-        const debounceMsRaw = cfg.get('codeLens.profilerIndexDebounceMs', DEFAULT_INDEX_DEBOUNCE_MS);
-        const retryMsRaw = cfg.get('codeLens.profilerIndexRetryMs', DEFAULT_INDEX_RETRY_MS);
-        const maxRetriesRaw = cfg.get('codeLens.profilerIndexMaxRetries', DEFAULT_MAX_INDEX_RETRIES);
+        const cfg = vscode.workspace.getConfiguration("xdebugProfileViewer");
+        const debounceMsRaw = cfg.get("codeLens.profilerIndexDebounceMs", DEFAULT_INDEX_DEBOUNCE_MS);
+        const retryMsRaw = cfg.get("codeLens.profilerIndexRetryMs", DEFAULT_INDEX_RETRY_MS);
+        const maxRetriesRaw = cfg.get("codeLens.profilerIndexMaxRetries", DEFAULT_MAX_INDEX_RETRIES);
         return {
             debounceMs: clampInt(debounceMsRaw, 0, 5000, DEFAULT_INDEX_DEBOUNCE_MS),
             retryMs: clampInt(retryMsRaw, 100, 10000, DEFAULT_INDEX_RETRY_MS),
-            maxRetries: clampInt(maxRetriesRaw, 0, 10, DEFAULT_MAX_INDEX_RETRIES)
+            maxRetries: clampInt(maxRetriesRaw, 0, 10, DEFAULT_MAX_INDEX_RETRIES),
         };
     }
     async buildOccurrencesForProfile(profileUri, mtime, profile) {
@@ -215,9 +223,11 @@ class ProfilerIndex {
                 mtime,
                 name: normalizedName,
                 resolvedFilePath,
-                rawFilePath: fn.file ? (0, sourceResolver_1.normalizeSlashes)(fn.file).toLowerCase() : undefined,
+                rawFilePath: fn.file
+                    ? (0, sourceResolver_1.normalizeSlashes)(fn.file).toLowerCase()
+                    : undefined,
                 line: fn.line,
-                functionId: fn.id
+                functionId: fn.id,
             });
         }
         return occurrences;
@@ -301,15 +311,17 @@ function lineDistance(candidateLine, line) {
     return Math.abs(candidateLine - line);
 }
 function extractComparableFunctionName(name) {
-    const trimmed = String(name || '').trim();
+    const trimmed = String(name || "").trim();
     if (!trimmed) {
-        return '';
+        return "";
     }
     const chunks = trimmed.split(/::|->|\\/);
     return chunks[chunks.length - 1] ?? trimmed;
 }
 function normalizeName(name) {
-    return String(name || '').trim().toLowerCase();
+    return String(name || "")
+        .trim()
+        .toLowerCase();
 }
 function normalizeFsPath(value) {
     return (0, sourceResolver_1.normalizeSlashes)(value).toLowerCase();

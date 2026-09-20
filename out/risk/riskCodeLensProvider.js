@@ -37,8 +37,8 @@ exports.RiskCodeLensProvider = void 0;
 exports.registerRiskCodeLensNoop = registerRiskCodeLensNoop;
 const vscode = __importStar(require("vscode"));
 const customEditor_1 = require("../view/customEditor");
-const RISK_NOOP_COMMAND = 'xdebugProfileViewer.riskCodeLensNoop';
-const OPEN_PROFILE_COMMAND = 'xdebugProfileViewer.openProfileFromCodeLens';
+const RISK_NOOP_COMMAND = "xdebugProfileViewer.riskCodeLensNoop";
+const OPEN_PROFILE_COMMAND = "xdebugProfileViewer.openProfileFromCodeLens";
 class RiskCodeLensProvider {
     riskService;
     didChangeEmitter = new vscode.EventEmitter();
@@ -66,13 +66,25 @@ class RiskCodeLensProvider {
             const risk = this.riskService.getBreakageRiskDisplay(document, fn);
             const title = risk.title;
             const tooltip = risk.tooltip;
-            const command = risk.profileUri ? OPEN_PROFILE_COMMAND : RISK_NOOP_COMMAND;
+            const command = risk.profileUri
+                ? OPEN_PROFILE_COMMAND
+                : RISK_NOOP_COMMAND;
             const args = risk.profileUri ? [risk.profileUri] : undefined;
             const lineStart = new vscode.Position(fn.line, 0);
             const range = new vscode.Range(lineStart, lineStart);
-            lenses.push(new vscode.CodeLens(range, { title, tooltip, command, arguments: args }));
+            lenses.push(new vscode.CodeLens(range, {
+                title,
+                tooltip,
+                command,
+                arguments: args,
+            }));
             if (risk.subtitle) {
-                lenses.push(new vscode.CodeLens(range, { title: risk.subtitle, tooltip, command, arguments: args }));
+                lenses.push(new vscode.CodeLens(range, {
+                    title: risk.subtitle,
+                    tooltip,
+                    command,
+                    arguments: args,
+                }));
             }
         }
         return lenses;
@@ -94,7 +106,7 @@ class RiskCodeLensProvider {
     async getFunctionsFromSymbols(document) {
         let symbols;
         try {
-            symbols = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', document.uri);
+            symbols = await vscode.commands.executeCommand("vscode.executeDocumentSymbolProvider", document.uri);
         }
         catch {
             return [];
@@ -109,10 +121,11 @@ class RiskCodeLensProvider {
             if (!symbol) {
                 continue;
             }
-            if (symbol.kind === vscode.SymbolKind.Function || symbol.kind === vscode.SymbolKind.Method) {
+            if (symbol.kind === vscode.SymbolKind.Function ||
+                symbol.kind === vscode.SymbolKind.Method) {
                 out.push({
                     name: symbol.name,
-                    line: symbol.selectionRange.start.line
+                    line: symbol.selectionRange.start.line,
                 });
             }
             for (const child of symbol.children) {
@@ -126,11 +139,13 @@ exports.RiskCodeLensProvider = RiskCodeLensProvider;
 function registerRiskCodeLensNoop(context) {
     context.subscriptions.push(vscode.commands.registerCommand(RISK_NOOP_COMMAND, () => undefined));
     context.subscriptions.push(vscode.commands.registerCommand(OPEN_PROFILE_COMMAND, async (profileUri) => {
-        await vscode.commands.executeCommand('vscode.openWith', profileUri, customEditor_1.XDEBUG_PROFILE_VIEW_TYPE);
+        await vscode.commands.executeCommand("vscode.openWith", profileUri, customEditor_1.XDEBUG_PROFILE_VIEW_TYPE);
     }));
 }
 function isCodeLensEnabled() {
-    return vscode.workspace.getConfiguration('xdebugProfileViewer').get('codeLens.enabled', true);
+    return vscode.workspace
+        .getConfiguration("xdebugProfileViewer")
+        .get("codeLens.enabled", true);
 }
 function dedupeFunctions(functions) {
     const seen = new Set();
